@@ -18,7 +18,7 @@ Policy information in computer networking today is hard to manage. This is in sh
 Run Ravel-based Sarasate system:
 
 ```bash
-# change to sarasate directory
+# change to ravel directory
 $ cd ravel  
 
 # run ravel
