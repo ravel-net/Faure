@@ -1,79 +1,59 @@
-# ***Sarasate***: A Strong Representation System for Network Policies
+# Ravel
 
-Policy information in computer networking today is hard to manage. This is in sharp contrast to relational data structured in a database that allows easy access. In this demonstration, we ask why cannot (or how can) turn network policies into relational data. Our key observation is that oftentimes a policy does not prescribe a single “definite” network state, but rather is an “incomplete” description of all the legitimate network states. Based on this idea, we adopt conditional tables and the usual SQL interface (a relational structure developed for incomplete database) as a means to represent and query sets of network states in exactly the same way as a single definite network snapshot. More importantly, like relational tables that improve data productivity and innovation, relational policies allow us to extend a rich set of data mediating methods to address the networking problem of coordinating policies in a distributed environment.
+Ravel is a software-defined networking (SDN) controller that uses a standard SQL database to represent the network.  _Why a database?_ SDN fundamentally revolves around data representation--representation of the network topology and forwarding, as well as the higher-level abstractions useful to applications.
 
-## **Prerequisites**
+In Ravel, the entire network control infrastructure is implemented within a SQL database.  Abstractions of the network take the form of _SQL views_ expressed by SQL queries that can be instantiated and extended on the fly.  To allow multiple simultaneous abstractions to collectively drive control, Ravel automatically _orchestrates_ the abstractions to merge multiple views into a coherent forwarding behavior.
 
-- Python 3 - dependencies
-  - Z3 - [Z3 API in Python](https://www.cs.tau.ac.il/~msagiv/courses/asv/z3py/guide-examples.htm)
-  - psycopg2 - [PostgreSQL database adapter for Python](https://www.psycopg.org/docs/)
-
-- PostgreSQL
-  - extension - plpython3u. Used to the user-defined functions which are to accommodate variables in c-table.
-    ```postgres
-    create extension plpython3u
-    ```
-## **Implementation**
-
-Run Sarasate system:
-
-```bash
-cd sarasate  # change to sarasate directory
-python sarasate.py # 
-```
-
-## **Toy examples**
-
-**policy1** 
-
-| dest   | path   | condition  |
-| :---  | :----  | :--- |
-| 1.2.3.4   | x | "x == [ABC]" |
-| y   | z        | "y != 1.2.3.5", "y != 1.2.3.4"   |
-
-**policy2**
-
-| dest  | path  | flag  | condition |
-| :---  | :---  | :---  | :---  |
-| 1.2.3.4   | [ABC] | u | "u == 1"  |
-| 5.6.7.8   | [ABC] | u | "u != 1"  |
-| 1.2.3.4   | [AC]  | v | "v == 1"  |
-| 5.6.7.8   | [AC]  | v | "v != 1"  |
-
-### **example 1**
-
-Create new policy by adding a new constrain *path != [ABC]* into policy1 using simple ***select*** query.
-
-```postgres
-/*simple query*/
-SELECT * FROM policy1 WHERE path != '[ABC]';
-```
-
-After entering this query, the sarasate will automatically generate three steps which needs to be executed on the postgres. The final results running on postgres are as follows:
-
-| dest   | path   | condition  |
-| :---  | :----  | :--- |
-| y   | z        | "y != 1.2.3.5", "y != 1.2.3.4", "z != [ABC]"  |
-
-### **example 2**
-
-Joinning policy1 and policy2. It is a sequential application that applys policy1 before policy2.
-
-```postgres
-/*simple join*/
-SELECT * FROM policy1, policy2 WHERE policy1.dest = policy2.dest AND policy1.path = policy2.path;
-```
-
-**result**:
-
-| dest  | path  | flag  | condition |
-| :---  | :---  | :---  | :---  |
-| y | z | u | "u != 1", "y == 5.6.7.8", "z == [ABC]"  |
-| y | z | v | "v != 1", "y == 5.6.7.8", "z == [AC]"  |
-| 1.2.3.4   | x | u | "x == [ABC]", "u == 1"    |
+For more information, see [http://ravel-net.org](http://ravel-net.org) or follow the [walkthrough](http://ravel-net.org/walkthrough).
 
 
+### Installation
+
+For installation instructions, see `INSTALL`.
 
 
+### Ravel Command-Line Arguments
+
+Ravel command-line arguments:
+
+  * `--help`, `-h`: show the help message and exit
+  * `--clean`, `-c`: cleanup Ravel and Mininet 
+  * `--onlydb`, `-o`: start Ravel without Mininet
+  * `--reconnect`, `-r`: reconnect to an existing database, skipping reinit
+  * `--noctl`, `-n`: start without controller (Mininet will still attempt to connect to a remote controller)
+  * `--db`, `-d`: PostgreSQL database name
+  * `--user`, -`u`: PostgreSQL username
+  * `--password`, `-p`: force prompt for PostgreSQL password
+  * `--topo`, `-t`: specify a Mininet topology argument
+  * `--custom`, `-c`: specify custom classes or params for Mininet
+  * `--script`, `-s`: execute a Ravel script immediately after startup
+  * `--verbosity`, `-v`: set logging output verbosity (debug|info|warning|critical|error)
+
+For example, to run Ravel with Mininet in the background, on a topology with a single switch and three hosts:
+
+    sudo ./ravel.py --topo=single,3
+
+To run only the database component of Ravel (i.e., no Mininet) on the same topology, using database `mydb` and username `myuser`:
+
+    sudo ./ravel.py --topo=single,3 --onlydb --db=mydb --user=myuser
 
 
+### Ravel CLI Commands
+
+The Ravel CLI has a number of commands to monitor and control applications and the network:
+
+  * `help`: show list of commands
+  * `apps`: list discovered applications
+  * `stat`: show running configuration
+  * `m`: execute Mininet command
+  * `p`: execute SQL statement
+  * `time`: print execution time
+  * `profile`: print detailed execution time
+  * `reinit`: truncate all database tables except topology
+  * `watch`: spawn new xterm watching database tables
+  * `exec`: execute a Ravel script
+  * `orch load`: load a set of orchestrated applications (in ascending ordering of priority)
+  * `orch unload`: unload one or more applications from the orchestrated set
+  * `orch auto [on/off]`: auto-commit commands for orchestration
+  * `rt addflow [src] [dst]`: install a flow
+  * `rt delflow [src] [dst]`, `rt delflow [flow id]`: remove a flow
