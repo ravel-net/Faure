@@ -4,7 +4,7 @@ Policy information in computer networking today is hard to manage. This is in sh
 
 ## **Prerequisites**
 
-- Python 3
+- Python 3 - dependencies
   - Z3 - [Z3 API in Python](https://www.cs.tau.ac.il/~msagiv/courses/asv/z3py/guide-examples.htm)
   - psycopg2 - [PostgreSQL database adapter for Python](https://www.psycopg.org/docs/)
 
@@ -13,6 +13,66 @@ Policy information in computer networking today is hard to manage. This is in sh
     ```postgres
     create extension plpython3u
     ```
-## **Implement**
+## **Implementation**
+
+Run Sarasate system:
+
+```bash
+cd sarasate  # change to sarasate directory
+python sarasate.py # 
+```
+
+## **Toy examples**
+
+**policy1** 
+
+| dest   | path   | condition  |
+| :---  | :----  | :--- |
+| 1.2.3.4   | x | "x == [ABC]" |
+| y   | z        | "y != 1.2.3.5", "y != 1.2.3.4"   |
+
+**policy2**
+
+| dest  | path  | flag  | condition |
+| :---  | :---  | :---  | :---  |
+| 1.2.3.4   | [ABC] | u | "u == 1"  |
+| 5.6.7.8   | [ABC] | u | "u != 1"  |
+| 1.2.3.4   | [AC]  | v | "v == 1"  |
+| 5.6.7.8   | [AC]  | v | "v != 1"  |
+
+### **example 1**
+
+Create new policy by adding a new constrain *path != [ABC]* into policy1 using simple ***select*** query.
+
+```postgres
+/*simple query*/
+SELECT * FROM policy1 WHERE path != '[ABC]';
+```
+
+**result**: 
+| dest   | path   | condition  |
+| :---  | :----  | :--- |
+| y   | z        | "y != 1.2.3.5", "y != 1.2.3.4", "z != [ABC]"  |
+
+### **example 2**
+
+Joinning policy1 and policy2. It is a sequential application that applys policy1 before policy2.
+
+```postgres
+/*simple join*/
+SELECT * FROM policy1, policy2 WHERE policy1.dest = policy2.dest AND policy1.path = policy2.path;
+```
+
+**result**:
+
+| dest  | path  | flag  | condition |
+| :---  | :---  | :---  | :---  |
+| y | z | u | "u != 1", "y == 5.6.7.8", "z == [ABC]"  |
+| y | z | v | "v != 1", "y == 5.6.7.8", "z == [AC]"  |
+| 1.2.3.4   | x | u | "x == [ABC]", "u == 1"    |
+
+
+
+
 
 
