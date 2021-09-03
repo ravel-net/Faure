@@ -1,0 +1,8 @@
+USER=$1
+DBNAME=$2
+SQL=$3
+TITLE=$4
+
+SQL='SELECT * FROM output;'
+
+watch -c -d -n 2 --no-title "echo '-------$TITLE------'; psql -U $USER -d $DBNAME -c '$SQL'"

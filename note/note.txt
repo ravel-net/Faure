@@ -1,0 +1,23 @@
+# policy join rtable, updating condition
+update output set cond = array_append(cond, 'l(' || path || ') == ' || l(rtable_transform_path));
+
+
+select output.dest, update_table.dest as upd_dest, output.path, update_table.path as upd_path, output.shortest_path, update_table.shortest_path as upd_spath, output.cond from output, update_table where output.dest = update_table.dest;
+
+# current best routes
+create table current_best_routes as select dest, set_path_val(path, cond) as path, set_path_val(length_spath, cond) as length_spath, {} as cond from policy_join_rtable;
+
+
+# get shortest length of path for each dest
+create table cal_spath as select dest, count(*), str_to_int(min(l(path))) as length from rtable group by dest; 
+
+# transforming rtable
+create table rtable_transform as select rtable.dest, rtable.path, cal_spath.length as length_spath, rtable.cond from rtable, cal_spath where rtable.dest = cal_spath.dest;
+
+
+
+'1.18.116.0/24', '1.22.208.0/24', '1.6.72.0/22', ''
+
+
+
+

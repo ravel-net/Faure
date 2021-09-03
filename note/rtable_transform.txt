@@ -1,0 +1,54 @@
+Step1: Create Data Content
+DROP TABLE IF EXISTS output;
+CREATE UNLOGGED TABLE output AS SELECT policy.dest, rtable_transform.dest AS rtable_transform_dest,policy.path, rtable_transform.path AS rtable_transform_path,policy.length_spath, rtable_transform.length_spath AS rtable_transform_length_spath,array_cat(policy.cond, rtable_transform.cond) AS cond FROM policy INNER JOIN rtable_transform on  equal(policy.dest, rtable_transform.dest) AND equal(policy.path, rtable_transform.path) AND equal(policy.length_spath, rtable_transform.length_spath) ; 
+
+
+Press Enter to continue...
+
+Step2: Update Conditions
+2.1: Insert Join Conditions
+UPDATE output SET cond = array_append(cond, dest || ' == ' || rtable_transform_dest);
+UPDATE output SET cond = array_append(cond, path || ' == ' || rtable_transform_path);
+UPDATE output SET cond = array_append(cond, length_spath || ' == ' || rtable_transform_length_spath);
+update output set cond = array_append(cond, 'l(' || path || ') == ' || l(rtable_transform_path));
+2.2: Projection and drop duplicated attributes
+UPDATE output SET dest = rtable_transform_dest WHERE not is_var(dest);
+UPDATE output SET path = rtable_transform_path WHERE not is_var(path);
+UPDATE output SET length_spath = rtable_transform_length_spath WHERE not is_var(length_spath);
+ALTER TABLE output DROP COLUMN rtable_transform_dest,DROP COLUMN rtable_transform_path,DROP COLUMN rtable_transform_length_spath; 
+
+
+Press Enter to continue...
+
+Step3: Normalization
+DELETE FROM output WHERE is_contradiction(output.cond);
+UPDATE output SET cond = '{}' WHERE is_tauto(output.cond);
+UPDATE output SET cond = remove_redundant(cond) where has_redundant(cond);
+
+Press Enter to continue...
+
+Please input ctable SQL query('q' quit)： 
+select * from policy (dest, path, length_spath, cond) join rtable(dest, path, cond);
+Step1: Create Data Content
+DROP TABLE IF EXISTS output;
+CREATE UNLOGGED TABLE output AS SELECT  policy.length_spath, policy.dest, rtable.dest AS rtable_dest,policy.path, rtable.path AS rtable_path,array_cat(policy.cond, rtable.cond) AS cond FROM policy INNER JOIN rtable on  equal(policy.dest, rtable.dest) AND equal(policy.path, rtable.path) ; 
+
+
+Press Enter to continue...
+
+Step2: Update Conditions
+2.1: Insert Join Conditions
+UPDATE output SET cond = array_append(cond, dest || ' == ' || rtable_dest);
+UPDATE output SET cond = array_append(cond, path || ' == ' || rtable_path);
+2.2: Projection and drop duplicated attributes
+UPDATE output SET dest = rtable_dest WHERE not is_var(dest);
+UPDATE output SET path = rtable_path WHERE not is_var(path);
+ALTER TABLE output DROP COLUMN rtable_dest,DROP COLUMN rtable_path; 
+
+
+Press Enter to continue...
+
+Step3: Normalization
+DELETE FROM output WHERE is_contradiction(output.cond);
+UPDATE output SET cond = '{}' WHERE is_tauto(output.cond);
+UPDATE output SET cond = remove_redundant(cond) where has_redundant(cond);

@@ -1,0 +1,8 @@
+# DBNAME=$1
+# SQL=$2
+USER=postgres
+DBNAME=sql
+
+SQL='SELECT dest, operation, path FROM sample_update order by dest desc;'
+
+watch -c -n 2 --no-title "echo '-------BGP Announcement-------'; psql -U $USER -d $DBNAME -c '$SQL'"

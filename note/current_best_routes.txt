@@ -1,0 +1,38 @@
+# create current best routes
+
+select * from policy(dest, path, length_spath, cond) join rtable(dest, path, length_spath, cond);
+
+Step1: Create Data Content
+DROP TABLE IF EXISTS output;
+CREATE UNLOGGED TABLE output 
+AS SELECT policy.dest, rtable.dest AS rtable_dest,
+policy.path, rtable.path AS rtable_path,
+policy.length_spath, rtable.length_spath AS rtable_length_spath,
+array_cat(policy.cond, rtable.cond) AS cond 
+FROM policy, rtable where equal(policy.dest, rtable.dest) 
+AND equal(policy.path, rtable.path) 
+AND policy.length_spath = rtable.length_spath ; 
+
+Step2: Update Conditions
+2.1: Insert Join Conditions
+UPDATE output SET cond = array_append(cond, dest || ' == ' || rtable_dest);
+UPDATE output SET cond = array_append(cond, path || ' == ' || rtable_path);
+UPDATE output SET cond = array_append(cond, length_spath || ' == ' || rtable_length_spath);
+update output set cond = array_append(cond, 'l(' || path || ') == ' || l(rtable_path));
+2.2: Projection and drop duplicated attributes
+UPDATE output SET dest = rtable_dest WHERE not is_var(dest);
+UPDATE output SET path = rtable_path WHERE not is_var(path);
+UPDATE output SET length_spath = rtable_length_spath WHERE length_spath > rtable_length_spath;
+ALTER TABLE output DROP COLUMN rtable_dest,DROP COLUMN rtable_path,DROP COLUMN rtable_length_spath; 
+
+Step3: Normalization
+DELETE FROM output WHERE is_contradiction(output.cond);
+UPDATE output SET cond = '{}' WHERE is_tauto(output.cond);
+UPDATE output SET cond = remove_redundant(cond) where has_redundant(cond);
+
+drop table policy_join_rtable
+alter table output rename to policy_join_rtable
+
+# extending value
+drop table current_best_routes;
+create table current_best_routes as select dest, set_path_val(path, cond) as path, length_spath, ARRAY[]::TEXT[] as cond from policy_join_rtable;

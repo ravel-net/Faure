@@ -1,0 +1,3 @@
+
+watch -c -n 2 --no-title "python3 print_output.py"
+

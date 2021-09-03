@@ -1,0 +1,57 @@
+# 1. update policy table
+
+UPDATE policy 
+SET min_length = sample_update.length_path,
+condition = ARRAY['l(' || policy.path || ') <= ' || sample_update.length_path] 
+FROM sample_update 
+WHERE policy.min_length > sample_update.length_path 
+AND policy.dest = sample_update.dest;
+
+
+# 2. new policy join new_candidate
+# 2.1 create new_candidate
+DROP TABLE IF EXISTS new_candidate;
+create table new_candidate as select dest, path, min_length as length_path, condition 
+from current_best_routes 
+where dest in (
+    select dest from sample_update
+) 
+union select dest, path, length_path, condition 
+from sample_update;
+
+# 2.2 join
+select * from policy (dest, path, min_length, condition) join new_candidate(dest, path, length_path, condition);
+
+Step1: Create Data Content
+DROP TABLE IF EXISTS new_best_routes;
+CREATE TABLE new_best_routes AS 
+SELECT policy.dest, new_candidate.dest AS new_candidate_dest,
+policy.path, new_candidate.path AS new_candidate_path,
+policy.min_length, new_candidate.length_path,
+array_cat(policy.condition, new_candidate.condition) AS condition 
+FROM policy, new_candidate 
+where equal(policy.dest, new_candidate.dest) 
+AND equal(policy.path, new_candidate.path) ; 
+
+Step2: Update Conditions
+2.1: Insert Join Conditions
+UPDATE new_best_routes SET condition = array_append(condition, dest || ' == ' || new_candidate_dest);
+UPDATE new_best_routes SET condition = array_append(condition, path || ' == ' || new_candidate_path);
+update new_best_routes set condition = array_append(condition, 'l(' || path || ') == ' || l(new_candidate_path));
+
+2.2: Projection and drop duplicated attributes
+UPDATE new_best_routes SET dest = new_candidate_dest WHERE not is_var(dest);
+UPDATE new_best_routes SET path = new_candidate_path WHERE not is_var(path);
+UPDATE new_best_routes SET min_length = length_path WHERE min_length > length_path;
+ALTER TABLE new_best_routes DROP COLUMN new_candidate_dest,DROP COLUMN new_candidate_path, DROP COLUMN length_path; 
+
+Step3: Normalization
+DELETE FROM new_best_routes WHERE is_contradiction(condition);
+UPDATE new_best_routes SET condition = '{}' WHERE is_tauto(condition);
+UPDATE new_best_routes SET condition = remove_redundant(condition) where has_redundant(condition);
+
+extending value
+update new_best_routes set path = set_path_val(path, condition), condition = ARRAY[]::TEXT[];
+
+
+

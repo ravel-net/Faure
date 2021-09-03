@@ -1,0 +1,8 @@
+# DBNAME=$1
+# SQL=$2
+USER=postgres
+DBNAME=sql
+
+SQL='SELECT * FROM policy where dest in (select dest from sample_update) order by dest desc;'
+
+watch -c -n 2 --no-title "echo '-------Sample BGP Policy-------'; psql -U $USER -d $DBNAME -c '$SQL'"

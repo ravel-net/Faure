@@ -1,0 +1,8 @@
+# DBNAME=$1
+# SQL=$2
+USER=postgres
+DBNAME=sql
+
+SQL='SELECT * FROM I2 LIMIT 5;'
+
+watch -c -n 2 --no-title "echo '---Contradictory instance 2 of policy 1---'; psql -U $USER -d $DBNAME -c '$SQL'"
