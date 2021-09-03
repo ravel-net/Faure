@@ -1,348 +1,438 @@
-import psycopg2
+from z3 import *
 import re
 
-conn = psycopg2.connect(host="127.0.0.1",user="postgres",password="251314",database="postgres")
-cur = conn.cursor()
+"SELECT a,b FROM T WHERE equal(C,'2') AND not_equal(a,b);"
 
-def pre_processing(query):
-    # remove ;
-    if ';' in query:
-        query = query[:-1]
+"SELECT * FROM T1 JOIN T2;"
+def cjoin(table1_info,table2_info,where):
+    result = ''
+    #t_result = 't_result'
 
-    query_lower = query.lower()
+    table1_info = table1_info.lower()
 
-    # detect the location of where
-    where_index = query_lower.find('where')
-    where_clause = query[where_index+5:]
+    table2_info = table2_info.lower()
 
-    select_clause = query_lower[ :where_index]
+    table1 =  table1_info.split('(')[0].strip()
+    table2 =  table2_info.split('(')[0].strip()
 
-    # get the tables
-    pattern = re.compile(r'from(.*?)where', re.S)
-    from_clause = re.findall(pattern, query_lower)[0].strip()
+    t_result = f"output"
+    #t_result = f"{table1}_join_{table2}"
+    p2 = re.compile(r'[(](.*?)[)]', re.S)
+    t1_attr =  re.findall(p2, table1_info)[0].strip().split(',')
+    t1_attr = [v.strip() for v in t1_attr ]
+    t2_attr =  re.findall(p2, table2_info)[0].strip().split(',')
+    t2_attr = [v.strip() for v in t2_attr ]
 
-    '''
-    Processing comparison operators
-    '''
-    defined_where_clause = ""
-    where_lists = re.split("and", where_clause)
-    for w in where_lists:
-        # if 'len' in w, that means this columm's type is integer
-        if 'len' in w:
-            continue
+    common_attr=[val for val in t1_attr if val in t2_attr and val != 'cond']
+    union_attr = list(set(t1_attr).union(set(t2_attr)))
+    result += "Step1: Create Data Content\n"
+    result += f"DROP TABLE IF EXISTS {t_result};\n"
 
-        if '!=' in w:
-            args = w.split('!=')
-            left = args[0].strip()
-            right = args[1].strip()
-            defined_where_clause = defined_where_clause + "not_equal({}, {}) and".format(left, right) 
-        elif '<>' in w:
-            args = w.split('<>')
-            left = args[0].strip()
-            right = args[1].strip()
-            defined_where_clause = defined_where_clause + "not_equal({}, {}) and ".format(left, right) 
-        elif '<=' in w:
-            args = w.split('<=')
-            left = args[0].strip()
-            right = args[1].strip()
-            defined_where_clause = defined_where_clause + "leq({}, {}) and ".format(left, right)
-        elif '>=' in w:
-            args = w.split('>=')
-            left = args[0].strip()
-            right = args[1].strip()
-            defined_where_clause = defined_where_clause + "geq({}, {}) and ".format(left, right)
-        elif '<' in w:
-            args = w.split('<')
-            left = args[0].strip()
-            right = args[1].strip()
-            defined_where_clause = defined_where_clause + "less({}, {}) and ".format(left, right)
-        elif '>' in w:
-            args = w.split('>')
-            left = args[0].strip()
-            right = args[1].strip()
-            defined_where_clause = defined_where_clause + "greater({}, {}) and ".format(left, right)
-        elif '=' in w:
-            args = w.split('=')
-            left = args[0].strip()
-            right = args[1].strip()
-            defined_where_clause = defined_where_clause + "equal({}, {}) and ".format(left, right)
+    slt_attr = ""
 
-    defined_where_clause = defined_where_clause[:-4]  # remove final 'and'      
+    for a in t1_attr:
+        if a not in common_attr and a != "cond":
+            slt_attr += f" {table1}.{a}, "
     
-    return select_clause, from_clause, defined_where_clause, where_lists
+    for a in t2_attr:
+        if a not in common_attr and a != "cond":
+            slt_attr += f"{table2}.{a},"
 
-def generator(select_clause, from_clause, where_clause, where_lists):
-    '''
-    The number of tables is greater than 1, it is join operation
-    else, it is selection
-    '''
-    table_list = from_clause.split(',')
-    if len(table_list) > 1:
+    for a in common_attr:
+        slt_attr += f"{table1}.{a}, {table2}.{a} AS {table2}_{a},"
 
-        t1_name = table_list[0].strip()
-        t2_name = table_list[1].strip()
-        
-        if '*' in select_clause:
-            '''
-            get the attributes of each table
-            '''
-            cur.execute("select * from {}".format(t1_name))
-            t1_attrs = [row[0] for row in cur.description]
-            cur.execute("select * from {}".format(t2_name))
-            t2_attrs = [row[0] for row in cur.description]
-            
-            '''
-            get common attributes and difference attributes
-            '''
-            common_attr = set(t1_attrs).intersection(set(t2_attrs)) - set(['condition'])
-            union_attr = set(t1_attrs).union(set(t2_attrs)) - set(['condition'])
-            diff_attr = union_attr - common_attr
+    if "cond" in t1_attr and "cond" in t2_attr:
+        slt_attr += f"array_cat({table1}.cond, {table2}.cond) AS cond,"
+        #slt_attr += f" {table1}.cond AS cond, {table2}.cond AS {table2}_cond,"
+    elif "cond" in t1_attr:
+        slt_attr += f" {table1}.cond AS cond,"
+    elif "cond" in t2_attr:
+        slt_attr += f" {table2}.cond AS {table2}_cond,"
 
-            attr_diff = ""
-            attr_equal = ""
-            
-            for c in common_attr:
-                attr_equal += "{}.{}, {}.{} AS {}_{},".format(t1_name, c, t2_name, c, t2_name, c)
-                
-            for d in diff_attr:
-                attr_diff += " {},".format(d)
+    slt_attr = slt_attr[:-1]
 
-            attr_diff += "array_cat({}.condition, {}.condition) as condition".format(t1_name, t2_name)
+    join_cond = ""
 
-            print("Step1: Create Data Content")
-            sql = "create table output as select {} {} FROM {} where ".format(attr_equal, attr_diff, from_clause) + where_clause
-            print(sql)
+    for a in common_attr:
+        join_cond += f" equal({table1}.{a}, {table2}.{a}) AND"
+    join_cond = join_cond[:-3]
 
-            print("Step2: Update Condition")
-
-            for w in where_lists:
-                args = w.strip().split(' ')
-
-                left = args[0].strip()
-                if '.' in left:
-                    left = left.replace(t1_name + '.', '')
-
-                opr = args[1].strip()
-
-                right = args[2].strip()
-                if '.' in right:
-                    right = right.replace('.', '_')
-                # repalce = with == in order accommodate z3
-                if '!=' not in opr and '<=' not in opr and '>=' not in opr and '=' in opr:
-                    opr = opr.replace('=', '==')
-                
-                sql = "update output set condition = array_append(condition, {} || ' {} ' || {});".format(left, opr, right)
-
-            attr_drop = ""
-
-            for c in common_attr:
-                sql = "update output set {} = {}_{} where not is_var({})".format(c, t2_name, c, c)
-                attr_drop = attr_drop + "drop column {}_{}, ".format(t2_name, c)
-                print(sql)
-
-            # remove the spare ,
-            attr_drop = attr_drop[:-2]
-            sql = "alter table output {};".format(attr_drop)
-            print(sql)
-        else:
-            print("still working")
-
-   
-    else:
-        print('Step1: Create Data Content')
-        sql = 'create table output as '
-
-        sql = sql + select_clause + ' where '+ where_clause + ';'
-        print(sql)
-
-        print('Step2: Update Condition')
-        for w in where_lists:
-            args = w.strip().split(' ')
-            left = args[0].strip()
-            opr = args[1].strip()
-            right = args[2].strip()
-            # repalce = with == in order accommodate z3
-            if '!=' not in opr and '<=' not in opr and '>=' not in opr and '=' in opr:
-                opr = opr.replace('=', '==')
-            
-            sql = "update output set condition = array_append(condition, {} || ' {} ' || {});".format(left, opr, right)
-            print(sql)
     
-
-    print('Step3: Normalization')
-    sql = 'delete from output where is_contradiction(condition);'
-    print(sql)
-    sql = "UPDATE output SET condition = '{}' WHERE is_tauto(condition);"
-    print(sql)
-    sql = "UPDATE output SET condition = remove_redundant(condition) WHERE has_redundant(condition);"
-    print(sql)
-
-
-
-def data(select_clause, from_clause, where_clause, where_lists):
-    '''
-    The number of tables is greater than 1, it is join operation
-    else, it is selection
-    '''
-    table_list = from_clause.split(',')
-    if len(table_list) > 1:
-
-        t1_name = table_list[0].strip()
-        t2_name = table_list[1].strip()
-        
-        if '*' in select_clause:
-            '''
-            get the attributes of each table
-            '''
-            cur.execute("select * from {}".format(t1_name))
-            t1_attrs = [row[0] for row in cur.description]
-            cur.execute("select * from {}".format(t2_name))
-            t2_attrs = [row[0] for row in cur.description]
-            
-            '''
-            get common attributes and difference attributes
-            '''
-            common_attr = set(t1_attrs).intersection(set(t2_attrs)) - set(['condition'])
-            union_attr = set(t1_attrs).union(set(t2_attrs)) - set(['condition'])
-            diff_attr = union_attr - common_attr
-
-            print(common_attr)
-            print(diff_attr)
-
-            attr_diff = ""
-            attr_equal = ""
-            
-            for c in common_attr:
-                attr_equal += "{}.{}, {}.{} AS {}_{},".format(t1_name, c, t2_name, c, t2_name, c)
-                
-            for d in diff_attr:
-                attr_diff += " {},".format(d)
-
-            attr_diff += "array_cat({}.condition, {}.condition) as condition".format(t1_name, t2_name)
-
-            print("Step1: Create Data Content")
-            sql = "create table output as select {} {} FROM {} where ".format(attr_equal, attr_diff, from_clause) + where_clause
-            print(sql)
-
-        else:
-            print("still working")
-   
+    if where != '':
+        where_cond = ''
+        if f"{table1}." or f"{table2}." in where:
+            where.replace(f"{table1}.",'').replace(f"{table2}.",'')
+        where_1 = where[:]
+        where_2 = where[:]
+        for c in common_attr:
+            if c in where_1:
+                where_1 = where_1.replace(c, f"{table1}.{c}")
+                where_2 = where_2.replace(c, f"{table2}.{c}")
+        #where_cond = f"({where_1}) and ({where_2})"   
+        where_cond = f"{where_1}"     
+        result += f"CREATE UNLOGGED TABLE {t_result} AS SELECT {slt_attr} FROM {table1} INNER JOIN {table2} on {join_cond} WHERE {where_cond}; \n"
     else:
-        print('Step1: Create Data Content')
-        sql = 'create table output as '
+        result += f"CREATE UNLOGGED TABLE {t_result} AS SELECT {slt_attr} FROM {table1} INNER JOIN {table2} on {join_cond}; \n"
+    
+    #result += f"SELECT * FROM {t_result};\n"
+    result +="\n#"
 
-        sql = sql + select_clause + ' where '+ where_clause + ';'
-        print(sql)
+    result +=  "Step2: Update Conditions\n"
+
+    #result += f"UPDATE {t_result} SET cond =  array_cat(cond, {table2}_cond);\n"
+    result += "2.1: Insert Join Conditions\n"
+    for attr in common_attr:
+        #result += f"UPDATE {t_result} SET cond = array_append(cond, {attr} || ' == ' || {table2}_{attr})  WHERE  (is_var({t_result}.{attr}) OR is_var({t_result}.{table2}_{attr}) );"
+        result += f"UPDATE {t_result} SET cond = array_append(cond, {attr} || ' == ' || {table2}_{attr});\n"
+    join_attr = ""
+
+    result += "2.2: Projection and drop duplicated attributes\n"
+    for attr in common_attr:
+
+        result += f"UPDATE {t_result} SET {attr} = {table2}_{attr} WHERE not is_var({attr});\n"
 
 
-def condition(select_clause, from_clause, where_clause, where_lists):
-    '''
-    The number of tables is greater than 1, it is join operation
-    else, it is selection
-    '''
-    table_list = from_clause.split(',')
-    if len(table_list) > 1:
+    q_dropcol = ''
+    for attr in common_attr: 
+        q_dropcol += f"DROP COLUMN {table2}_{attr},"
+    
+    q_dropcol = q_dropcol[:-1]
 
-        t1_name = table_list[0].strip()
-        t2_name = table_list[1].strip()
-        
-        if '*' in select_clause:
-            '''
-            get the attributes of each table
-            '''
-            cur.execute("select * from {}".format(t1_name))
-            t1_attrs = [row[0] for row in cur.description]
-            cur.execute("select * from {}".format(t2_name))
-            t2_attrs = [row[0] for row in cur.description]
-            
-            '''
-            get common attributes and difference attributes
-            '''
-            common_attr = set(t1_attrs).intersection(set(t2_attrs)) - set(['condition'])
-            union_attr = set(t1_attrs).union(set(t2_attrs)) - set(['condition'])
-            diff_attr = union_attr - common_attr
+    result += f"ALTER TABLE {t_result} {q_dropcol}; \n"
+    #ALTER TABLE t_result DROP COLUMN dest, DROP COLUMN path;
 
-            print(common_attr)
-            print(diff_attr)
+    return result
 
-            print("Step2: Update Condition")
 
-            for w in where_lists:
-                args = w.strip().split(' ')
+def get_sql(query):
+    #print("INPUT: " + query + "\n")
+    #t_result = 't_result'
+    if 'WHERE' in query:
+        qlist = query.split('WHERE')
+        query = qlist[0].lower() + ' where ' + qlist[1]
+    elif 'where' in query:
+        qlist = query.split('where')
+        query = qlist[0].lower() + ' where ' + qlist[1]
+    else: query = query.lower()    
+    #select = re.split("select|from",query)
+    p1 = re.compile(r'select(.*?)from', re.S) 
+    select =  re.findall(p1, query)[0].strip()
 
-                left = args[0].strip()
-                if '.' in left:
-                    left = left.replace(t1_name + '.', '')
+    if 'from' in query:
+        if 'where' in query:
+            p2 = re.compile(r'from(.*?)where', re.S) 
+        else: p2 = re.compile(r'from(.*?);', re.S) 
+    table_name =  re.findall(p2, query)[0].strip()
 
-                opr = args[1].strip()
-
-                right = args[2].strip()
-                if '.' in right:
-                    right = right.replace('.', '_')
-                # repalce = with == in order accommodate z3
-                if '!=' not in opr and '<=' not in opr and '>=' not in opr and '=' in opr:
-                    opr = opr.replace('=', '==')
-                
-                sql = "update output set condition = array_append(condition, {} || ' {} ' || {});".format(left, opr, right)
-
-            attr_drop = ""
-
-            for c in common_attr:
-                sql = "update output set {} = {}_{} where not is_var({})".format(c, t2_name, c, c)
-                attr_drop = attr_drop + "drop column {}_{}, ".format(t2_name, c)
-                print(sql)
-
-            # remove the spare ,
-            attr_drop = attr_drop[:-2]
-            sql = "alter table output {};".format(attr_drop)
-            print(sql)
-        else:
-            print("still working")
-
-   
+    if 'where' in query:
+        p3 = re.compile(r'where(.*?);', re.S) 
+        where =  re.findall(p3, query)[0].strip()
+        # where = where.upper()
     else:
+        where = None
 
-        print('Step2: Update Condition')
-        for w in where_lists:
-            args = w.strip().split(' ')
-            left = args[0].strip()
-            opr = args[1].strip()
-            right = args[2].strip()
-            # repalce = with == in order accommodate z3
-            if '!=' not in opr and '<=' not in opr and '>=' not in opr and '=' in opr:
-                opr = opr.replace('=', '==')
+    query_list = re.split("select|from|join|where",query)
+
+    if 'join' in query and 'join' in table_name:
+        #print('JOIN CASE')
+        table1 = table_name.split('join')[0].strip()
+        table2 = table_name.split('join')[1].strip()
+
+        table1_info = table1.lower()
+        table2_info = table2.lower()
+    
+        table1_name =  table1_info.split('(')[0].strip()
+        table2_name =  table2_info.split('(')[0].strip()
+        #t_result = f"{table1_name}_join_{table2_name}"
+        t_result = f"output"
+        result = ""
+        #result = f"Optional: DROP TABLE IF EXISTS {t_result}; \n\n"
+
+        if where == None:
+            result += cjoin(table1, table2,'')
+        else:
+            result += cjoin(table1,table2,where)
+            #result += f"SELECT * FROM cjoin('{table1}', '{table2}');"
+            # result += f"CREATE TABLE {t_result}_temp AS SELECT * from {t_result} where {where};"
+            # result += f"DROP TABLE IF EXISTS {t_result};"
+            # result += f"ALTER TABLE {t_result}_temp RENAME TO {t_result};"
+    if 'join' not in query:
+        #t_result = f"{table_name}_o"
+        t_result = f"output"
+        result = ""
+        
+        result += "Step1: Create data content\n"
+        result += f"DROP TABLE IF EXISTS {t_result}; \n"
+ 
+        q1 = f"CREATE UNLOGGED TABLE {t_result} AS {query} \n"
+        result+=q1
+        if where == None:
+            #result = query
+            return result
+        
+        #result += f"SELECT * FROM {t_result};\n"
+        result +="\n#"
+
+        result +=  "Step2: Update Conditions\n"
+
+    if where != None:
+
+        if "and"  in where: 
+            where_list = where.split("and")
+            #plpy.info(where_list[0].strip())
+        else: 
+            where_list = []
+            where_list.append(where.strip())
+
+        ##### c may contain '(OR)'
+
+        for disj in where_list:
+            has_or = False
             
-            sql = "update output set condition = array_append(condition, {} || ' {} ' || {});".format(left, opr, right)
-            print(sql)
+            if 'or' in disj:
+                if 'and' not in query:
+                    disj = disj.strip()
+                    c_orlist = disj.split('or')
+                else:
+                    disj = disj.strip()[1:-1].strip()
+                    c_orlist = disj.split('or')
+                has_or = True
+            
+            else:   
+                c = disj.strip()
+
+            if has_or:
+                or_exp = ''
+                l_list = []
+                r_list = []
+                for c in c_orlist:
+                    p1 = re.compile(r'[(](.*?)[,]', re.S) 
+                    left =  re.findall(p1, c)[0].strip()
+
+                    left_is_attr = False
+
+                    if "'" in left:
+                        left = left # cons
+
+                    else:  # attr
+                        left = left.replace(table_name, t_result)
+                        left_is_attr = True
+                        if '.' in left:
+                            left = left.split('.')[1]
+                    # 2nd arg
+                    right_is_attr = False
+                    p2 = re.compile(r'[,](.*?)[)]', re.S) 
+                    right =  re.findall(p2, c)[0].strip()
+
+                    if table_name in right:
+                        right = right.replace(table_name, t_result)
+                        right_is_attr = True
+                        if '.' in right:
+                            right = right.split('.')[1]
+
+                    elif "'" in right:
+                        right = right # cons
+
+                    if 'not_equal' in c:
+                        or_exp += f"{left} || ' != ' || { right } || ',' ||"
+                    elif 'equal' in c:
+                        or_exp += f"{left} || ' == ' || { right } || ',' ||"
+                    elif 'greater' in c:
+                        or_exp += f"{left} || ' > ' || { right } || ',' ||"
+                    elif 'less' in c:
+                        or_exp += f"{left} || ' < ' || { right } || ',' ||"
+                    elif 'geq' in c:
+                        or_exp += f"{left} || ' >= ' || { right } || ',' ||"
+                    elif 'leq' in c:
+                        or_exp += f"{left} || ' <= ' || { right } || ',' ||"
+
+                    left = left.replace("'","")
+                    right = right.replace("'","")
+                    l_list.append(left)
+                    r_list.append(right)
+                or_exp = or_exp[:-9]
+                #or_exp += ")"
+                for idx in range(len(l_list)):
+                    
+                    #result += f"UPDATE {t_result} SET cond = array_append(cond, {or_exp})  WHERE is_var({t_result}.{l_list[idx]}) Or is_var({t_result}.{r_list[idx]}); \n"
+
+                    if "'" in r_list[idx] or "'" in l_list[idx]:
+                        q = f"UPDATE {t_result} SET cond = array_append(cond, 'Or(' || {or_exp} || ')' ) ; \n"
+
+                    else: 
+                        q = ''
+                    if q not in result:
+                        result += q
+            
+            elif not has_or:
+
+                # 1st arg
+                p1 = re.compile(r'[(](.*?)[,]', re.S) 
+                left =  re.findall(p1, c)[0].strip()
+
+                left_is_attr = False
+
+                if "'" in left:
+                    left = left # cons
+
+                else:  # attr
+                    left = left.replace(table_name, t_result)
+                    left_is_attr = True
+                    if '.' in left:
+                        left = left.split('.')[1]
+                # 2nd arg
+                right_is_attr = False
+                p2 = re.compile(r'[,](.*?)[)]', re.S) 
+                right =  re.findall(p2, c)[0].strip()
+
+                if table_name in right:
+                    right = right.replace(table_name, t_result)
+                    right_is_attr = True
+                    if '.' in right:
+                        right = right.split('.')[1]
+
+                elif "'" in right:
+                    right = right # cons
+
+                #result += "Insert SELECT conditions:\n"
+
+                if 'not_equal' in c:
+
+                    if right_is_attr or left_is_attr:
+                        q = f"UPDATE {t_result} SET cond = array_append(cond, {left} ||' != '|| {right}); \n"
+                    else:
+                        q = ''
+                    result += q
+
+                elif 'equal' in c:
+
+                    if right_is_attr or left_is_attr:
+                        q = f"UPDATE {t_result} SET cond = array_append(cond, {left} ||' == '|| {right}) ;\n"
+                    else:
+                        q = ''
+                    result += q
+
+                elif 'greater' in c:
+
+                    if right_is_attr or left_is_attr:
+                        q = f"UPDATE {t_result} SET cond = array_append(cond, {left} ||' > '|| {right}) ;\n"
+                    else:
+                        q = ''
+                    result += q
+
+                elif 'less' in c:
+
+                    if right_is_attr or left_is_attr:
+                        q = f"UPDATE {t_result} SET cond = array_append(cond, {left} ||' < '|| {right});\n"
+
+                    else:
+                        q = ''
+                    result += q
+
+                elif 'geq' in c:
+
+                    if right_is_attr or left_is_attr:
+                        q = f"UPDATE {t_result} SET cond = array_append(cond, {left} ||' >= '|| {right}) ;\n"
+                    else:
+                        q = ''
+                    result += q
+
+                elif 'leq' in c:
+
+                    if right_is_attr or left_is_attr:
+                        q = f"UPDATE {t_result} SET cond = array_append(cond, {left} ||' <= '|| {right});\n"
+                    else:
+                        q = ''
+                    result += q
+
+    #result += f"SELECT * FROM {t_result};\n"
+    result +="\n#"
+    result +=  "Step3: Normalization\n"
+
+    q_contra = f"DELETE FROM {t_result} WHERE is_contradiction({t_result}.cond);\n"
+
+    q_tauto = f"UPDATE {t_result} SET cond = '{{}}' WHERE is_tauto({t_result}.cond);\n"
+
+    result += q_contra + q_tauto
+
+    q_rm = f"UPDATE {t_result} SET cond = remove_redundant(cond) where has_redundant(cond);\n"
+    result += q_rm
+
+    # q_projection = f"SELECT {select} from {t_result};\n"
+    # result += q_projection
 
 
-def z3():
-    print('Step3: Normalization')
-    sql = 'delete from output where is_contradiction(condition);'
-    print(sql)
-    sql = "UPDATE output SET condition = '{}' WHERE is_tauto(condition);"
-    print(sql)
-    sql = "UPDATE output SET condition = remove_redundant(condition) WHERE has_redundant(condition);"
-    print(sql)
 
-if __name__ == '__main__':
-    # query = "select * from policy1 where path != '[ABC]'"
-    # query = "select * from policy1, policy2 where policy1.dest = policy2.dest and policy1.path = policy2.path;"
-    # query = "select * from bgp_policy, new_candidates where bgp_policy.dest = new_candidates.dest and bgp_policy.path = new_candidates.path and min_len <= len_path;"
-    # select_clause, from_clause, defined_where_clause, where_lists = pre_processing(query)
-    # generator(select_clause, from_clause, defined_where_clause, where_lists)
-    user_input = ''
+    return result
 
-    while user_input != 'q':
-        try:
-            user_input = input("Please input ctable SQL query('q' quit)： \n")
+user_input = ''
 
-            # fix bug(when fisrt time input is 'q')
-            if user_input == 'q':
-                break
+while user_input != 'q':
+    try:
+        user_input = input("Please input ctable SQL query('q' quit)： \n")
 
-            select_clause, from_clause, defined_where_clause, where_lists = pre_processing(user_input)
-            generator(select_clause, from_clause, defined_where_clause, where_lists)
+        # fix bug(when fisrt time input is 'q')
+        if user_input == 'q':
+            break
+        
+        r = get_sql(user_input)
+        relist = r.split('#')
 
-        except:
-            print("ERROR: Illegal Input")
+        print(relist[0])
+        input("Press Enter to continue...")
+        print()
+        print(relist[1])
+        input("Press Enter to continue...")
+        print()
+        print(relist[2])
+        input("Press Enter to continue...")
+        print()
+    except:
+        print("ERROR: Illegal Input")
+
+
+#PART1:
+#SELECT * FROM Policy1(DEST,PATH,COND) JOIN Policy2(DEST,PATH, FLAG, COND);
+#SELECT * FROM Policy1(DEST,PATH,COND) JOIN Policy2(DEST,PATH, FLAG, COND) WHERE not_equal(path, '[ADC]');
+
+
+#Part2: 
+#SELECT * FROM Policy1(DEST,PATH,COND) JOIN Routing1(DEST,PATH);
+#SELECT * FROM POlicy1(DEST,PATH,COND) JOIN Routing2(DEST,PATH);
+
+#Part3:
+#SELECT * FROM Policy3(DEST,PATH,COND) JOIN Policy4(DEST,NH, FLAG, COND);
+
+
+# query = "SELECT * FROM P1(DEST,PATH,COND) JOIN P3(DEST,PATH, FLAG, COND) WHERE equal(flag,'1');"
+# query = "SELECT * FROM P1(DEST,PATH,COND) JOIN P3(DEST,PATH, FLAG, COND);"
+# query = "SELECT * FROM P1(DEST,PATH,COND) JOIN P3(DEST,PATH, FLAG, COND) WHERE equal(dest,'5.6.7.8');"
+# query = "select * from policy2 where equal(flag,'1');"
+# query = "SELECT * FROM Policy1(DEST,PATH,COND) JOIN Policy2(DEST,PATH, FLAG, COND) WHERE not_equal(path, '[ADC]');"
+# query = "SELECT * FROM Policy1(DEST,PATH,COND) JOIN Routing1(DEST,PATH);"
+# query = "SELECT * FROM Policy3(DEST,PATH,COND) JOIN Policy4(DEST,NH, FLAG, COND);"
+# print(query)
+# re = get_sql(query)
+# relist = re.split('#')
+
+# print(relist[0])
+# input("Press Enter to continue...")
+# print()
+# print(relist[1])
+# input("Press Enter to continue...")
+# print()
+# print(relist[2])
+
+
+#print(get_sql("SELECT * FROM t2 WHERE equal(d,'1');"))
+    
+#print(get_sql("SELECT * FROM T3 WHERE equal(c,'1');"))
+
+# print(get_sql("SELECT * FROM T1 JOIN T2;"))
+
+#print(get_sql("SELECT * FROM T5 WHERE  equal(a,'1')  OR  equal(a,'2')  ;"))
+#print(get_sql("SELECT * FROM T4 WHERE equal(c,'1');"))
+
+# query_user = input("Please input ctable SQL query：")
+# print(type(query_user)) 
+ 

@@ -9,7 +9,7 @@ Policy information in computer networking today is hard to manage. This is in sh
   - psycopg2 - [PostgreSQL database adapter for Python](https://www.psycopg.org/docs/)
 
 - PostgreSQL
-  - extension - plpython3u. Used to the user-defined functions which are to accomodate variables in c-table.
+  - extension - plpython3u. Used to the user-defined functions which are to accommodate variables in c-table.
     ```postgres
     create extension plpython3u
     ```
