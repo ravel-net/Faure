@@ -46,7 +46,7 @@ Create new policy by adding a new constrain *path != [ABC]* into policy1 using s
 
 ```postgres
 /*simple query*/
-SELECT * FROM policy1 WHERE path != '[ABC]';
+SELECT * FROM policy1 WHERE not_equal(path, '[ABC]');
 ```
 
 After entering this query, the sarasate will automatically generate three steps which needs to be executed on the postgres. The final results running on postgres are as follows:
@@ -61,7 +61,7 @@ Joinning policy1 and policy2. It is a sequential application that applys policy1
 
 ```postgres
 /*simple join*/
-SELECT * FROM policy1, policy2 WHERE policy1.dest = policy2.dest AND policy1.path = policy2.path;
+SELECT * FROM policy1(dest, path, condition) JOIN policy2(dest, path, flag, condition);
 ```
 
 **result**:
