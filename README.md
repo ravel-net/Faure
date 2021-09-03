@@ -49,7 +49,8 @@ Create new policy by adding a new constrain *path != [ABC]* into policy1 using s
 SELECT * FROM policy1 WHERE path != '[ABC]';
 ```
 
-**result**: 
+After entering this query, the sarasate will automatically generate three steps which needs to be executed on the postgres. The final results running on postgres are as follows:
+
 | dest   | path   | condition  |
 | :---  | :----  | :--- |
 | y   | z        | "y != 1.2.3.5", "y != 1.2.3.4", "z != [ABC]"  |
