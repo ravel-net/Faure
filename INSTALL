@@ -1,4 +1,4 @@
-INSTALL RAVEL
+INSTALL Faure
 -------------
 
 See http://ravel-net.org/download for pre-packaged VMs.
@@ -6,32 +6,32 @@ See http://ravel-net.org/download for pre-packaged VMs.
 
 INSTALL FROM SOURCE
 -------------------
-To install Ravel from source, first check out a copy of the repository:
+To install Faure from source, first check out a copy of the repository:
 
-    git clone http://github.com/ravel-net/ravel
+    git clone https://github.com/ravel-net/Faure.git
 
-Run the Ravel install script:
+Run the Faure install script:
 
-    cd ravel
+    cd Faure
     util/install.sh [options]
 
 Options for `install.sh` are:
     * -a: install all required packages (Mininet, Pox, and PostgreSQL)
     * -m: install only Mininet and Pox (i.e., Mininet install with `-kmnvp`)
     * -p: install only PostgreSQL
-    * -r: install Python libraries required by Ravel, configure PostgreSQL
+    * -r: install Python libraries required by Faure, configure PostgreSQL
           account and extensions
 
 
 CONFIGURE POSTGRESQL
 --------------------
 By default, PostgreSQL uses peer authentication, in which the client's username
-authenticates a connection to the database.  Ravel requires either trust (any
+authenticates a connection to the database.  Faure requires either trust (any
 user can connect) ormd5 (password-based) authentication.
 
 To set modify the authentication method, edit:
 
-    /etc/postgresql/9.3/main/pg_hba.conf
+    /etc/postgresql/13/main/pg_hba.conf
 
 Set the last field on the following lines to trust or md5:
 
@@ -44,7 +44,7 @@ to make this change automatically.
 
 OPTIONAL: CONFIGURE OVS-OFCTL
 -----------------------------
-Ravel supports multiple protocols for database triggers to interact with
+Faure supports multiple protocols for database triggers to interact with
 OpenFlow switches.  This allows changes in the database to be propagated to the
 network.  Supported protocols, which can be configured in ravel.cfg, are:
     * message queues (the default protocol)
