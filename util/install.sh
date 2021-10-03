@@ -18,7 +18,7 @@ if [ "$DIST" = "Ubuntu" ] || [ "$DIST" = "Debian" ]; then
     remove='sudo apt-get -y remove'
     pkginst='sudo dpkg -i'
     addrepo='sudo apt-add-repository -y'
-    python=
+    python='python3'
 else
     echo "Only Ubuntu and Debian supported!"
     exit
@@ -100,7 +100,7 @@ function ravel {
 function usage {
     printf '\nUsage %s [-amprh]\n\n' $(basename $0) >&2
 
-    printf 'Install and setup Ravel and its dependencies.\n\n' >&2
+    printf 'Install and setup Faure and its dependencies.\n\n' >&2
 
     printf 'options:\n' >&2
     printf -- ' -a: install (A)ll packages\n' >&2
