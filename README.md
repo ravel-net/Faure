@@ -68,3 +68,7 @@ The Faure CLI has a number of commands to monitor and control applications and t
 - `bgp` application. BGP simulation by using Sarasate application
 
   For the details, see [`README_bgp.md`](apps/README_bgp.md)
+
+## Notes
+
+In Faure system, we are not openning all modes provided in Ravel system. In the future, we will open all modes related to Mininet in the Faure system.
