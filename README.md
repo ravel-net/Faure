@@ -2,6 +2,11 @@
 
 Faure is the newest version of Ravel which is a software-defined networking (SDN) controller that uses a standard SQL database to represent the network. For the more information of Ravel, see [https://github.com/ravel-net/ravel](https://github.com/ravel-net/ravel) or [http://ravel-net.org](http://ravel-net.org) or follow the [walkthrough](http://ravel-net.org/walkthrough). 
 
+## Prerequisites
+
+- Python 3
+- pip3
+- Ubuntu 20.04(recommended) or greater
 
 ## Installation
 
