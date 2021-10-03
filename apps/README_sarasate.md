@@ -15,7 +15,7 @@ Policy information in computer networking today is hard to manage. This is in sh
     ```
 ## **Implementation**
 
-Run Ravel-based Sarasate system:
+Run Faure system with `--onlydb` mode:
 
 ```bash
 # change to ravel directory
