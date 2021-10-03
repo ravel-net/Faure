@@ -23,31 +23,36 @@ We are mimicking the behavior of the BGP speaker as it receives announcement fro
 1. Run Faure system with `--onlydb` mode and enter in bgp terminal.
    
     ```bash
+    # run Faure system
     $ sudo python3 ravel.py --onlydb
 
-    $ravel> bgp
+    # load Sarasate application
+    ravel> orch load sarasate
+
+    # Enter in bgp terminal
+    ravel> bgp
     ```
 
 2. Load typical data .
    
     ```bash
-    $bgp> loaddemo
+    bgp> loaddemo
     ```
 
 3. Update BGP policy because the entering routes affect the way the current policy implemented.
 
     ```bash
-    $bgp> update_policy bgp_policy routes_delta
+    bgp> update_policy bgp_policy routes_delta
     ```
 
 4. Generate new candidate routes by union current best routes and BGP announcements. It is stored in `new_routes` table.
 
     ```bash
-    $bgp> union current_best_routes routes_delta
+    bgp> union current_best_routes routes_delta
     ```
 
 5. Get the new best routes by using sarasate join bgp policy and new candidate routes.
    
     ```bash
-    $bgp> select * from bgp_policy, new_routes where bgp_policy.dest = new_routes.dest and bgp_policy.path = new_routes.path;
+    bgp> select * from bgp_policy, new_routes where bgp_policy.dest = new_routes.dest and bgp_policy.path = new_routes.path;
     ```
