@@ -7,9 +7,9 @@ import os
 import pickle
 import threading
 import time
-import xmlrpclib
+import xmlrpc.client
 import sysv_ipc
-from SimpleXMLRPCServer import SimpleXMLRPCServer
+from xmlrpc.server import SimpleXMLRPCServer
 
 import ravel.profiling
 from ravel.log import logger
@@ -19,7 +19,7 @@ def clear_queue(queue_id):
     try:
         mq = sysv_ipc.MessageQueue(queue_id,
                                    sysv_ipc.IPC_CREAT,
-                                   mode=0777)
+                                   mode=0o777)
         mq.remove()
     except sysv_ipc.PermissionsError:
         logger.warning("could not clear clear message queue {0}"
@@ -63,13 +63,13 @@ class MsgQueueSender(MessageSender):
         pc.start()
         try:
             self.mq = sysv_ipc.MessageQueue(self.queue_id,
-                                            mode=0777)
-        except sysv_ipc.ExistentialError, e:
+                                            mode=0o777)
+        except sysv_ipc.ExistentialError as e:
             logger.warning("queue {0} does not exist: {1}"
                            .format(self.queue_id, e))
             self.mq = sysv_ipc.MessageQueue(self.queue_id,
                                             sysv_ipc.IPC_CREAT,
-                                            mode=0777)
+                                            mode=0o777)
         pc.stop()
 
     def send(self, msg):
@@ -94,7 +94,7 @@ class MsgQueueReceiver(MessageReceiver):
         clear_queue(self.queue_id)
         self.mq = sysv_ipc.MessageQueue(self.queue_id,
                                         sysv_ipc.IPC_CREAT,
-                                        mode=0777)
+                                        mode=0o777)
 
     def start(self):
         "Start a new thread to receive messages"
@@ -105,11 +105,13 @@ class MsgQueueReceiver(MessageReceiver):
 
     def _run(self):
         while self.running:
-            s,_ = self.mq.receive()
-            msg = s.decode()
-            obj = pickle.loads(msg)
+            s,_ = self.mq.receive() # s is bytes object under python3 instead of str under python2
+            msg = s.decode("utf-8", "ignore") # decode() returns str under python3, returns unicode under python2
+            # obj = pickle.loads(msg)
+            obj = msg
             logger.debug("mq: received message %s", msg)
-            if obj is not None:
+            # if obj is not None:
+            if type(obj) is not str:
                 obj.consume(self.consumer)
 
     def stop(self, event=None):
@@ -127,7 +129,7 @@ class RpcSender(MessageSender):
         self.addr = "http://{0}:{1}".format(host, port)
         pc = ravel.profiling.PerfCounter("rpc_connect")
         pc.start()
-        self.proxy = xmlrpclib.ServerProxy(self.addr, allow_none=True)
+        self.proxy = xmlrpc.client.ServerProxy(self.addr, allow_none=True)
         pc.stop()
 
     def send(self, msg):
@@ -159,7 +161,7 @@ class RpcReceiver(MessageReceiver):
         obj = pickle.loads(msg)
         logger.debug("rpc: received message %s", msg)
         if obj is not None:
-            print "CONSUMING MESSAGE", obj
+            print("CONSUMING MESSAGE", obj)
             obj.consume(self.consumer)
 
     def start(self):
@@ -178,7 +180,7 @@ class RpcReceiver(MessageReceiver):
            event: an optional quit message"""
         self.running = False
         addr = "http://{0}:{1}".format(self.host, self.port)
-        self.proxy = xmlrpclib.ServerProxy(addr, allow_none=True)
+        self.proxy = xmlrpc.client.ServerProxy(addr, allow_none=True)
         self.proxy.client_send(pickle.dumps(None))
 
 class OvsSender(MessageSender):

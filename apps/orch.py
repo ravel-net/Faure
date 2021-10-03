@@ -5,7 +5,7 @@ Orchestration is a core application that is enabled by default.
 """
 
 import os
-from itertools import tee, izip
+from itertools import tee
 from ravel.app import AppConsole, discoverComponents
 from ravel.log import logger
 from ravel.util import resource_file
@@ -69,7 +69,7 @@ CREATE OR REPLACE RULE {0}2Clock AS
 def pairwise(iterable):
     a, b = tee(iterable)
     next(b, None)
-    return izip(a, b)
+    return zip(a, b)
 
 class OrchConsole(AppConsole):
     def __init__(self, db, env, components):
@@ -94,15 +94,15 @@ class OrchConsole(AppConsole):
             else:
                 status = "\033[91m[disabled]\033[0m"
 
-            print "Auto-orchestration:", status
+            print("Auto-orchestration:", status)
             return
 
         if len(args) != 1:
-            print "Invalid syntax"
+            print("Invalid syntax")
 
         arg = args[0]
         if arg.lower() not in ["on", "off"]:
-            print "Invalid option: {0}.  Valid options: on or off".format(arg)
+            print("Invalid option: {0}.  Valid options: on or off".format(arg))
             return
 
         if arg.lower() == "on":
@@ -113,7 +113,7 @@ class OrchConsole(AppConsole):
     def do_run(self, line):
         "Execute the orchestration protocol"
         if self.ordering is None:
-            print "Must first set ordering"
+            print("Must first set ordering")
             return
 
         try:
@@ -123,17 +123,17 @@ class OrchConsole(AppConsole):
 
             self.db.cursor.execute("INSERT INTO p_{0} VALUES ({1}, 'on');"
                                    .format(hipri, count))
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
 
     def do_list(self, line):
         "List orchestrated applications and their priority"
         if self.ordering is None:
-            print "No app under orchestration."
+            print("No app under orchestration.")
             return
-        print "Priority: low -> high"
+        print("Priority: low -> high")
         for num, app in enumerate(self.ordering):
-            print "   {0}: {1}".format(num, app)
+            print("   {0}: {1}".format(num, app))
 
     def do_reset(self, line):
         "Reset orchestration protocol function"
@@ -152,7 +152,7 @@ class OrchConsole(AppConsole):
             return
         for app in ordering:
             if app.lower() not in self.env.apps:
-                print "Unrecognized app", app
+                print("Unrecognized app", app)
                 return
 
         # load unloaded apps
@@ -183,8 +183,8 @@ class OrchConsole(AppConsole):
                         vtable += "; DELETE FROM {0}".format(v[0])
                 else:
                     vtable = "{0}_violation".format(app)
-            except Exception, e:
-                print e
+            except Exception as e:
+                print(e)
             sql += runrule_template.format(app, vtable)
 
         if "routing" in ordering:
@@ -207,8 +207,8 @@ class OrchConsole(AppConsole):
 
         try:
             self.db.cursor.execute(self.sql)
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
 
     def do_unload(self, line):
         """Stop one or more applications
@@ -219,28 +219,28 @@ class OrchConsole(AppConsole):
         for app in apps:
             try:
                 self.db.cursor.execute("DELETE FROM app_violation WHERE app = '{0}'".format(app))
-            except Exception, e:
-                print e
+            except Exception as e:
+                print(e)
             self.ordering.remove(app.lower())
             if app in self.env.apps:
                 self.env.unload_app(app)
             else:
-                print "Unknown application", app
+                print("Unknown application", app)
 
         # reload orchestration with remaining applications
         self.do_load(" ".join(self.ordering))
 
     def help_load(self):
-        print "syntax: load [app1] [app2] ..."
-        print "-- set (ascending) priority for one or more applications"
-        print "-- Note: A total ordering is needed for loaded applications."
-        print "         Any unlisted applications that are loaded will be"
-        print "         unloaded.  Any listed applications that are unloaded"
-        print "         will be loaded."
+        print("syntax: load [app1] [app2] ...")
+        print("-- set (ascending) priority for one or more applications")
+        print("-- Note: A total ordering is needed for loaded applications.")
+        print("         Any unlisted applications that are loaded will be")
+        print("         unloaded.  Any listed applications that are unloaded")
+        print("         will be loaded.")
 
     def complete_load(self, text, line, begidx, endidx):
         "Complete loaded applications' names for load command"
-        apps = self.env.apps.keys()
+        apps = list(self.env.apps.keys())
         if not text:
             completions = apps
         else:
@@ -250,7 +250,7 @@ class OrchConsole(AppConsole):
 
     def complete_unload(self, text, line, begidx, endidx):
         "Complete unloaded applications' names for unload command"
-        apps = self.env.apps.loaded.keys()
+        apps = list(self.env.apps.loaded.keys())
         if not text:
             completions = apps
         else:

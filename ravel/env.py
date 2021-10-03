@@ -30,7 +30,7 @@ class Environment(object):
         self.maincli = None
         self.provider = provider
         self.opts = opts
-        self.params = { "topology" : opts.topo,
+        self.params = { #"topology" : opts.topo,
                         "pox" : "offline" if opts.noctl else "running",
                         "mininet" : "offline" if opts.onlydb else "running",
                         "database" : opts.db,
@@ -166,8 +166,8 @@ class Environment(object):
     def pprint(self):
         "Pretty print the list of startup parameters"
         out = ""
-        pad = max([len(k) for k in self.params.keys()]) + 2
-        for k,v in self.params.iteritems():
+        pad = max([len(k) for k in list(self.params.keys())]) + 2
+        for k,v in self.params.items():
             key = "{0}:".format(k).ljust(pad, " ")
             out += "  {0} {1}\n".format(key, v)
         return out

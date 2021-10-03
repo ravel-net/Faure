@@ -14,20 +14,20 @@ class PSqlConsole(AppConsole):
         "Execute a PostgreSQL statement"
         try:
             self.db.cursor.execute(line)
-        except psycopg2.ProgrammingError, e:
-            print e
+        except psycopg2.ProgrammingError as e:
+            print(e)
             return
 
         try:
             data = self.db.cursor.fetchall()
             if data is not None:
                 names = [row[0] for row in self.db.cursor.description]
-                print tabulate.tabulate(data, headers=names)
+                print(tabulate.tabulate(data, headers=names))
         except psycopg2.ProgrammingError:
             # no results, eg from an insert/delete
             pass
-        except TypeError, e:
-            print e
+        except TypeError as e:
+            print(e)
 
 shortcut = "p"
 description = "execute a PostgreSQL statement"

@@ -24,9 +24,7 @@ class Singleton(type):
             cls.instance = super(Singleton, cls).__call__(*args, **kw)
         return cls.instance
 
-class RavelLogger(Logger, object):
-    __metaclass__ = Singleton
-    
+class RavelLogger(Logger, object, metaclass=Singleton):
     def __init__(self):
         Logger.__init__(self, "ravel")
         ch = logging.StreamHandler()

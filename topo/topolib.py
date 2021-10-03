@@ -154,7 +154,7 @@ class Topo( object ):
     def setlinkInfo( self, src, dst, info, key=None ):
         """Set link metadata dict"""
         edgeIdx = self.g.es.find(node1_in=[src,dst], node2_in=[src,dst]).index
-        for k in info.keys():
+        for k in list(info.keys()):
             self.g.es[edgeIdx][k] = info[k]
 
     def nodeInfo( self, name ):
@@ -167,7 +167,7 @@ class Topo( object ):
         "Set metadata (dict) for node"
         self.g.node[ name ] = info
         vertexIdx = self.g.vs.find(name_eq=name).index
-        for k in info.keys():
+        for k in list(info.keys()):
             self.g.vs[vertexIdx][k] = info[k]
 
 class EmptyTopo(Topo):
@@ -342,13 +342,13 @@ class ISPTopo( Topo ):
                 for word in line.split():
                     self.asNumLst.append(int(word))
                     break
-        except Exception, e:
+        except Exception as e:
             logger.error('unable to parse stat file: %s', e)
             return
 
         self.asNum = int(k)
         if self.asNum not in self.asNumLst:
-            print('Invalid AS number: {0}!'.format(self.asNum))
+            print(('Invalid AS number: {0}!'.format(self.asNum)))
             print('Please use the following available AS number:')
             for i in self.asNumLst:
                 print(i)
@@ -363,12 +363,12 @@ class ISPTopo( Topo ):
         edgeFileNm = '{0}_edges.txt'.format(self.asNum)
         try:
             nodeFile = open(os.path.join(self.ISPTopoPath, nodeFileNm))
-        except Exception, e:
+        except Exception as e:
             logger.error('Unable to open nodes file: %s', e)
             return
         try:
             edgeFile = open(os.path.join(self.ISPTopoPath, edgeFileNm))
-        except Exception, e:
+        except Exception as e:
             logger.error('Unable to open edges file: %s', e)
             return
 
@@ -377,7 +377,7 @@ class ISPTopo( Topo ):
                 try:
                     nodeMp[int(word)] = 's{0}'.format(word)
                     nodeNmLst.append('s{0}'.format(word))
-                except Exception, e:
+                except Exception as e:
                     logger.error("Unable to parse node number '{0}': ".format(word))
                     return
                 break 
@@ -389,17 +389,17 @@ class ISPTopo( Topo ):
                 logger.error("Unrecognized format of edges file!")
                 raise Exception
             try:
-                if int(words[0]) not in nodeMp.keys():
+                if int(words[0]) not in list(nodeMp.keys()):
                     logger.error("An edge connects to a nonexist switch {0} that is not exist!".format(words[0]))
                     raise Exception
-                if int(words[1]) not in nodeMp.keys():
+                if int(words[1]) not in list(nodeMp.keys()):
                     logger.error("An edge connects to a nonexist switch {0} that is not exist!".format(words[1]))
                     raise Exception
                 if int(words[0]) != int(words[1]):
                     if ((int(words[0]), int(words[1])) not in link) and ((int(words[1]), int(words[0])) not in link):
                         #Edges in the edge file are unidirectional, but Ravel takes link in the topology as bidirectional. So, only one link is added for every edge.
                         link.append((int(words[0]), int(words[1])))
-            except ValueError, e:
+            except ValueError as e:
                 logger.error("Unable to parse edge from switch '{0}' to switch '{1}'".format(words[0],words[1]))
                 return None
         

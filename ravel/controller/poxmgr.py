@@ -141,7 +141,7 @@ class PoxManager(OfManager):
     def requestStats(self):
         "Send all switches a flow statistics request"
         self.flowstats = []
-        for connection in core.openflow._connections.values():
+        for connection in list(core.openflow._connections.values()):
             connection.send(of.ofp_stats_request(body=of.ofp_flow_stats_request()))
 
         self.log.debug("ravel: sent {0} flow stats requests".format(

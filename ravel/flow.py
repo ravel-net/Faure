@@ -11,8 +11,8 @@ messages to the switches.
 import os
 import pickle
 import threading
-import xmlrpclib
-from SimpleXMLRPCServer import SimpleXMLRPCServer
+import xmlrpc.client
+from xmlrpc.server import SimpleXMLRPCServer
 
 import sysv_ipc
 from mininet.net import macColonHex, netParse, ipAdd

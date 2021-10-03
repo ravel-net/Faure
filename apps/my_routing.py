@@ -14,18 +14,18 @@ class MyRoutingConsole(AppConsole):
            Usage: addflow [host1] [host2]"""
         args = line.split()
         if len(args) != 2 and len(args) != 3:
-            print "Invalid syntax"
+            print("Invalid syntax")
             return
 
         hostnames = self.env.provider.cache_name
         src = args[0]
         dst = args[1]
         if src not in hostnames:
-            print "Unknown host", src
+            print("Unknown host", src)
             return
 
         if dst not in hostnames:
-            print "Unknown host", dst
+            print("Unknown host", dst)
             return
 
         fw = 1
@@ -33,11 +33,11 @@ class MyRoutingConsole(AppConsole):
             try:
                 fw = int(args[2])
             except Exception:
-                print "Invalid firewall option", args[2]
+                print("Invalid firewall option", args[2])
                 return
 
             if fw not in [0,1]:
-                print "Invalid firewall option:", fw
+                print("Invalid firewall option:", fw)
                 return
 
         src = hostnames[src]
@@ -52,21 +52,21 @@ class MyRoutingConsole(AppConsole):
             self.db.cursor.execute("INSERT INTO my_rm (fid, src, dst, FW) "
                                    "VALUES ({0}, {1}, {2}, {3});"
                                    .format(fid, src, dst, fw))
-        except Exception, e:
-            print "Failure: flow not installed --", e
+        except Exception as e:
+            print("Failure: flow not installed --", e)
             return
 
-        print "Success: installed flow with fid", fid
+        print("Success: installed flow with fid", fid)
 
     def _delFlowByName(self, src, dst):
         hostnames = self.env.provider.cache_name
 
         if src not in hostnames:
-            print "Unknown host", src
+            print("Unknown host", src)
             return
 
         if dst not in hostnames:
-            print "Unknown host", dst
+            print("Unknown host", dst)
             return
 
         src = hostnames[src]
@@ -95,8 +95,8 @@ class MyRoutingConsole(AppConsole):
 
             self.db.cursor.execute("DELETE FROM my_rm WHERE fid={0}".format(fid))
             return fid
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             return None
 
     def do_delflow(self, line):
@@ -109,13 +109,13 @@ class MyRoutingConsole(AppConsole):
         elif len(args) == 2:
             fid = self._delFlowByName(args[0], args[1])
         else:
-            print "Invalid syntax"
+            print("Invalid syntax")
             return
 
         if fid is not None:
-            print "Success: removed flow with fid", fid
+            print("Success: removed flow with fid", fid)
         else:
-            print "Failure: flow not removed"
+            print("Failure: flow not removed")
 
 shortcut = "myrt"
 description = "IP routing"

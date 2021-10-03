@@ -15,7 +15,7 @@ import sys
 
 if "PYTHONPATH" in os.environ:
     sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
-sys.path.append("/home/ravel/ravel")
+sys.path.append("/home/ravel/ravel-python3")
 
 from ravel.network import AddLinkMessage, NetworkProvider
 from ravel.messaging import MsgQueueSender
@@ -30,7 +30,7 @@ sender = MsgQueueSender(NetworkProvider.QueueId)
 sender.send(msg)
 
 return None;
-$$ LANGUAGE 'plpythonu' VOLATILE SECURITY DEFINER;
+$$ LANGUAGE 'plpython3u' VOLATILE SECURITY DEFINER;
 
 
 /* Add link trigger */
@@ -52,7 +52,7 @@ import sys
 
 if "PYTHONPATH" in os.environ:
     sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
-sys.path.append("/home/ravel/ravel")
+sys.path.append("/home/ravel/ravel-python3")
 
 from ravel.network import RemoveLinkMessage, NetworkProvider
 from ravel.messaging import MsgQueueSender
@@ -65,7 +65,7 @@ sender = MsgQueueSender(NetworkProvider.QueueId)
 sender.send(msg)
 
 return None;
-$$ LANGUAGE 'plpythonu' VOLATILE SECURITY DEFINER;
+$$ LANGUAGE 'plpython3u' VOLATILE SECURITY DEFINER;
 
 
 /* Delete link trigger */
@@ -90,7 +90,7 @@ import sys
 
 if "PYTHONPATH" in os.environ:
     sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
-sys.path.append("/home/ravel/ravel")
+sys.path.append("/home/ravel/ravel-python3")
 
 from ravel.network import AddSwitchMessage, NetworkProvider
 from ravel.messaging import MsgQueueSender
@@ -106,7 +106,7 @@ sender = MsgQueueSender(NetworkProvider.QueueId)
 sender.send(msg)
 
 return None;
-$$ LANGUAGE 'plpythonu' VOLATILE SECURITY DEFINER;
+$$ LANGUAGE 'plpython3u' VOLATILE SECURITY DEFINER;
 
 
 /* Add switch trigger */
@@ -128,7 +128,7 @@ import sys
 
 if "PYTHONPATH" in os.environ:
     sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
-sys.path.append("/home/ravel/ravel")
+sys.path.append("/home/ravel/ravel-python3")
 
 from ravel.network import RemoveSwitchMessage, NetworkProvider
 from ravel.messaging import MsgQueueSender
@@ -141,7 +141,7 @@ sender = MsgQueueSender(NetworkProvider.QueueId)
 sender.send(msg)
 
 return None;
-$$ LANGUAGE 'plpythonu' VOLATILE SECURITY DEFINER;
+$$ LANGUAGE 'plpython3u' VOLATILE SECURITY DEFINER;
 
 
 /* Delete switch trigger */
@@ -165,7 +165,7 @@ import sys
 
 if "PYTHONPATH" in os.environ:
     sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
-sys.path.append("/home/ravel/ravel")
+sys.path.append("/home/ravel/ravel-python3")
 
 from ravel.network import AddHostMessage, NetworkProvider
 from ravel.messaging import MsgQueueSender
@@ -180,7 +180,7 @@ sender = MsgQueueSender(NetworkProvider.QueueId)
 sender.send(msg)
 
 return None;
-$$ LANGUAGE 'plpythonu' VOLATILE SECURITY DEFINER;
+$$ LANGUAGE 'plpython3u' VOLATILE SECURITY DEFINER;
 
 
 /* Add host trigger */
@@ -202,7 +202,7 @@ import sys
 
 if "PYTHONPATH" in os.environ:
     sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
-sys.path.append("/home/ravel/ravel")
+sys.path.append("/home/ravel/ravel-python3")
 
 from ravel.network import RemoveHostMessage, NetworkProvider
 from ravel.messaging import MsgQueueSender
@@ -215,7 +215,7 @@ sender = MsgQueueSender(NetworkProvider.QueueId)
 sender.send(msg)
 
 return None;
-$$ LANGUAGE 'plpythonu' VOLATILE SECURITY DEFINER;
+$$ LANGUAGE 'plpython3u' VOLATILE SECURITY DEFINER;
 
 
 /* Delete host trigger */

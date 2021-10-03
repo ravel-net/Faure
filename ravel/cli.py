@@ -55,7 +55,7 @@ class RavelConsole(cmd.Cmd):
             if auto_orch:
                 self.env.loaded["orch"].console.onecmd("run")
         else:
-            print "*** Unknown command:", line
+            print("*** Unknown command:", line)
 
     def onecmd(self, line):
         "Run command and report execution time for each execution line"  
@@ -85,7 +85,7 @@ class RavelConsole(cmd.Cmd):
             if app in self.env.apps:
                 self.env.load_app(app)
             else:
-                print "Unknown application", app
+                print("Unknown application", app)
 
     def do_unload(self, line):
         """Stop one or more applications
@@ -95,17 +95,17 @@ class RavelConsole(cmd.Cmd):
             if app in self.env.apps:
                 self.env.unload_app(app)
             else:
-                print "Unknown application", app
+                print("Unknown application", app)
 
     def do_exec(self, line):
         "Execute a Ravel script"
 
         if os.path.isdir(line):
-            print "ravel: {0}: Is a directory".format(line)
+            print("ravel: {0}: Is a directory".format(line))
             return
 
         if not os.path.isfile(line):
-            print "ravel: {0}: No such file or directory".format(line)
+            print("ravel: {0}: No such file or directory".format(line))
             return
 
         with open(line) as f:
@@ -115,7 +115,7 @@ class RavelConsole(cmd.Cmd):
                 if cmd == "" or cmd[0] == "#":
                     continue
 
-                print "{0}{1}".format(RavelConsole.prompt, cmd)
+                print("{0}{1}".format(RavelConsole.prompt, cmd))
                 self.onecmd(cmd)
 
                 # may need to wait for flows/database changes
@@ -133,7 +133,7 @@ class RavelConsole(cmd.Cmd):
 
     def do_apps(self, line):
         "List available applications and their status"
-        for app in self.env.apps.values():
+        for app in list(self.env.apps.values()):
             shortcut = ""
             description = ""
 
@@ -145,8 +145,8 @@ class RavelConsole(cmd.Cmd):
             if app.description:
                 description = ": {0}".format(app.description)
 
-            print "  {0} {1}{2}{3}".format(status, app.name,
-                                           shortcut, description)
+            print("  {0} {1}{2}{3}".format(status, app.name,
+                                           shortcut, description))
 
     def do_profile(self, line):
         """Run command and report detailed execution time.
@@ -170,7 +170,7 @@ class RavelConsole(cmd.Cmd):
 
     def do_stat(self, line):
         "Show running configuration, state"
-        print self.env.pprint()
+        print(self.env.pprint())
 
     def do_time(self, line):
         "Run command and report execution time"
@@ -178,7 +178,7 @@ class RavelConsole(cmd.Cmd):
         if line:
             self.onecmd(line)
         elapsed = time.time() - elapsed
-        print "\nTime: {0}ms".format(round(elapsed * 1000, 3))
+        print("\nTime: {0}ms".format(round(elapsed * 1000, 3)))
 
     def do_watch(self, line):
         """Launch an xterm window to watch database tables in real-time
@@ -189,7 +189,7 @@ class RavelConsole(cmd.Cmd):
 
         args = line.split()
         if len(args) == 0:
-            print "Invalid syntax"
+            print("Invalid syntax")
             return
 
         cmd, cmdfile = ravel.app.mk_watchcmd(self.env.db, args)
@@ -211,7 +211,7 @@ class RavelConsole(cmd.Cmd):
         if len(tokens) > 0 and tokens[0] in self.env.loaded:
             app = self.env.apps[tokens[0]]
             if len(tokens) <= 1:
-                print app.description
+                print(app.description)
                 app.console.do_help("")
             else:
                 app.console.do_help(" ".join(tokens[1:]))
@@ -222,7 +222,7 @@ class RavelConsole(cmd.Cmd):
         "Add loaded application names/shortcuts to cmd name completions"
         completions = cmd.Cmd.completenames(self, text, ignored)
 
-        apps = self.env.loaded.keys()
+        apps = list(self.env.loaded.keys())
         if not text:
             completions.extend(apps)
         else:
@@ -233,20 +233,22 @@ class RavelConsole(cmd.Cmd):
 def RavelCLI(opts):
     """Start a RavelConsole instance given a list of command line options
        opts: parsed OptionParser object"""
-    if opts.custom:
-        ravel.mndeps.custom(opts.custom)
+    # if opts.custom:
+    #     ravel.mndeps.custom(opts.custom)
 
-    if opts.topo:
-        topo = ravel.mndeps.build(opts.topo)
-        if topo is None:
-            print "Invalid mininet topology", opts.topo
-            return
-    else: 
-        topo = ravel.mndeps.build("empty")
+    # if opts.topo:
+    #     topo = ravel.mndeps.build(opts.topo)
+    #     if topo is None:
+    #         print("Invalid mininet topology", opts.topo)
+    #         return
+    # else: 
+    #     topo = ravel.mndeps.build("empty")
 
-    if opts.script is not None and not os.path.isfile(opts.script):
-        print "{0}: no such script file".format(opts.script)
-        return
+    topo = ravel.mndeps.build("empty")
+
+    # if opts.script is not None and not os.path.isfile(opts.script):
+    #     print("{0}: no such script file".format(opts.script))
+    #     return
 
     passwd = None
     if opts.password:
@@ -262,8 +264,8 @@ def RavelCLI(opts):
         controller = None
     else:
         if PoxInstance.is_running():
-            print "Pox instance is already running.  Please shut down " \
-                "existing controller first (or run ravel.py --clean)."
+            print("Pox instance is already running.  Please shut down " \
+                "existing controller first (or run ravel.py --clean).")
             return
 
         controller = PoxInstance("ravel.controller.poxmgr")
@@ -275,22 +277,31 @@ def RavelCLI(opts):
         net = MininetProvider(raveldb, topo, controller)
 
     if net is None:
-        print "Cannot start network"
+        print("Cannot start network")
 
     env = Environment(raveldb, net, Config.AppDirs, opts)
     env.start()
 
     while True:
-        try:
-            if opts.script is not None:
-                RavelConsole(env).do_exec(opts.script)
+    #     if opts.script is not None:
+    #         RavelConsole(env).do_exec(opts.script)
 
-                if opts.exit:
-                    break
+    #         if opts.exit:
+    #             break
 
-            RavelConsole(env, quiet=opts.script).cmdloop()
-            break
-        except Exception, e:
-            logger.warning("console crashed: %s", e)
+        # RavelConsole(env, quiet=opts.script).cmdloop()
+        RavelConsole(env, quiet=None).cmdloop()
+        break
+        # try:
+        #     if opts.script is not None:
+        #         RavelConsole(env).do_exec(opts.script)
+
+        #         if opts.exit:
+        #             break
+
+        #     RavelConsole(env, quiet=opts.script).cmdloop()
+        #     break
+        # except Exception as e:
+        #     logger.warning("console crashed: %s", e)
 
     env.stop()

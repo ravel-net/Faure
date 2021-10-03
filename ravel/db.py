@@ -69,7 +69,7 @@ class RavelDb():
 
             # ignore cursor connection
             return len(self.cursor.fetchall()) - 1
-        except psycopg2.DatabaseError, e:
+        except psycopg2.DatabaseError as e:
             logger.warning("error loading schema: %s", self.fmt_errmsg(e))
 
         return 0
@@ -89,7 +89,7 @@ class RavelDb():
             s = open(script, "r").read()
             logger.debug("loaded schema %s", script)
             self.cursor.execute(s)
-        except psycopg2.DatabaseError, e:
+        except psycopg2.DatabaseError as e:
             logger.warning("error loading schema: %s", self.fmt_errmsg(e))
 
     def load_topo(self, provider):
@@ -142,7 +142,7 @@ class RavelDb():
                                             topo.port(h1, h2)[0],
                                             topo.port(h1, h2)[1]))
 
-        except psycopg2.DatabaseError, e:
+        except psycopg2.DatabaseError as e:
             logger.warning("error loading topology: %s", self.fmt_errmsg(e))
 
     def create(self):
@@ -163,13 +163,13 @@ class RavelDb():
             if self.name not in dblist:
                 cursor.execute("CREATE DATABASE %s;" % self.name)
                 logger.debug("created databse %s", self.name)
-        except psycopg2.DatabaseError, e:
+        except psycopg2.DatabaseError as e:
             logger.warning("error creating database: %s", self.fmt_errmsg(e))
         finally:
             conn.close()
 
     def add_extensions(self):
-        """If not already added, add extensions required by Ravel (plpythonu,
+        """If not already added, add extensions required by Ravel (plpython3u,
            postgis, pgrouting)"""
         try:
             self.cursor.execute("SELECT 1 FROM pg_catalog.pg_namespace n JOIN " +
@@ -178,12 +178,12 @@ class RavelDb():
             fetch = self.cursor.fetchall()
 
             if fetch == []:
-                self.cursor.execute("CREATE EXTENSION IF NOT EXISTS plpythonu;")
+                self.cursor.execute("CREATE EXTENSION IF NOT EXISTS plpython3u;")
                 self.cursor.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
                 self.cursor.execute("CREATE EXTENSION IF NOT EXISTS pgrouting;")
                 self.cursor.execute("CREATE EXTENSION plsh;")
                 logger.debug("created extensions")
-        except psycopg2.DatabaseError, e:
+        except psycopg2.DatabaseError as e:
             logger.warning("error loading extensions: %s", self.fmt_errmsg(e))
             
     def clean(self):
@@ -199,7 +199,7 @@ class RavelDb():
             conn.set_isolation_level(ISOLEVEL)
             cursor = conn.cursor()
             cursor.execute("drop database %s" % self.name)
-        except psycopg2.DatabaseError, e:
+        except psycopg2.DatabaseError as e:
             logger.warning("error cleaning database: %s", self.fmt_errmsg(e))
         finally:
             if conn:
@@ -216,7 +216,7 @@ class RavelDb():
             self.cursor.execute("truncate %s;" % ", ".join(tables))
             logger.debug("truncated tables")
             self.cursor.execute("INSERT INTO clock values (0);")
-        except psycopg2.DatabaseError, e:
+        except psycopg2.DatabaseError as e:
             logger.warning("error truncating databases: %s", self.fmt_errmsg(e))
 
     def fmt_errmsg(self, exception):

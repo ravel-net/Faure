@@ -36,15 +36,16 @@ def mk_watchcmd(db, args):
         if t[1] is not None:
             limit = "LIMIT {0}".format(t[1])
 
-        header = "*" * (15 - len(t[0])/2)
+        header = "*" * (15 - int(len(t[0])/2))
         queries.append("\echo '{0} {1} {0}'".format(header, t[0], header))
         query = "SELECT * FROM {0} {1};".format(t[0], limit)
         queries.append(query)
 
     temp = tempfile.NamedTemporaryFile(delete=False)
-    temp.write("\n".join(queries))
+    # temp.write("\n".join(queries))
+    temp.write(bytes("\n".join(queries), encoding='utf-8')) # python3 requires that the string to be written is represented as bytes, not str.
     temp.close()
-    os.chmod(temp.name, 0666)
+    os.chmod(temp.name, 0o666)
 
     watch_arg = "echo db: {0}; psql -U{1} -d {0} -f {2}".format(
         db.name, db.user, temp.name)
@@ -169,9 +170,9 @@ class AppConsole(cmd.Cmd):
 
     def do_list(self, line):
         "List application components"
-        print self.name, "components:"
+        print(self.name, "components:")
         for comp in self.components:
-            print "   ", comp
+            print("   ", comp)
 
     def do_watch(self, line):
         "Watch application components"
@@ -207,7 +208,7 @@ class AppComponent(object):
             cmd = "DROP {0} IF EXISTS {1} CASCADE;".format(self.typ, self.name)
             db.cursor.execute(cmd)
             logger.debug("removing component: %s", cmd)
-        except Exception, e:
+        except Exception as e:
             logger.error("error removing component {0}: {1}"
                          .format(self.name, e))
 
@@ -268,8 +269,8 @@ class Application(object):
         with open(self.sqlfile) as f:
             try:
                 db.cursor.execute(f.read())
-            except psycopg2.ProgrammingError, e:
-                print "Error loading app {0}: {1}".format(self.name, e)
+            except psycopg2.ProgrammingError as e:
+                print("Error loading app {0}: {1}".format(self.name, e))
 
         logger.debug("loaded application %s", self.name)
 
@@ -310,7 +311,7 @@ class Application(object):
             self.console.prompt = self.name + "> "
             self.console.doc_header = self.name + \
                                       " commands (type help <topic>):"
-        except BaseException, e:
+        except BaseException as e:
             errstr = "{0}: {1}".format(type(e).__name__, str(e))
             logger.warning("error loading %s console: %s",
                            self.name, e)

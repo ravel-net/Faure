@@ -2,7 +2,7 @@
 Utility and helper functions
 """
 
-import ConfigParser
+import configparser
 import os
 import re
 import sys
@@ -130,7 +130,7 @@ class ConfigParameters(object):
     def read(self, cfg):
         """Read the configuration file
            cfg: the path to the configuration file"""
-        parser = ConfigParser.SafeConfigParser()
+        parser = configparser.SafeConfigParser()
         parser.read(cfg)
 
         if parser.has_option("apps", "directories"):

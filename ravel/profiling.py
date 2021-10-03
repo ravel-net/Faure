@@ -24,7 +24,7 @@ def enable_profiling():
     "Enable profiling"
     shm = sysv_ipc.SharedMemory(ProfileQueueId,
                                 flags=sysv_ipc.IPC_CREAT,
-                                mode=0777,
+                                mode=0o777,
                                 size=sysv_ipc.PAGE_SIZE,
                                 init_character=" ")
     shm.write(str(ProfileOn))
@@ -34,7 +34,7 @@ def disable_profiling():
     "Disable profiling"
     shm = sysv_ipc.SharedMemory(ProfileQueueId,
                                 flags=sysv_ipc.IPC_CREAT,
-                                mode=07777,
+                                mode=0o7777,
                                 size=sysv_ipc.PAGE_SIZE,
                                 init_character=" ")
     shm.write(str(ProfileOff))
@@ -45,7 +45,7 @@ def is_profiled():
     try:
         shm = sysv_ipc.SharedMemory(ProfileQueueId)
         return shm.read().strip("\0") == ProfileOn
-    except sysv_ipc.ExistentialError, e:
+    except sysv_ipc.ExistentialError as e:
         logger.warning("profile queue doesn't exist: %", e)
         return False
 
@@ -82,10 +82,10 @@ class PerfCounter(object):
         "Report the performance counter by adding it to the message queue"
         try:
             if is_profiled():
-                mq = sysv_ipc.MessageQueue(ProfileQueueId, mode=0777)
+                mq = sysv_ipc.MessageQueue(ProfileQueueId, mode=0o777)
                 mq.send(pickle.dumps(self))
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
 
     def __repr__(self):
         return str(self)
@@ -103,26 +103,26 @@ class ProfiledExecution(object):
     def print_summary(self):
         "Print results of collected performance counters"
         if len(self.counters) == 0:
-            print "No performance counters found"
+            print("No performance counters found")
             return
 
         agg = OrderedDict()
         summ = 0
-        print "-" * 40
+        print("-" * 40)
         for counter in self.counters:
             summ += counter.time_ms
 
-            if counter.name not in agg.keys():
+            if counter.name not in list(agg.keys()):
                 agg[counter.name] = (1, counter.time_ms)
             else:
                 count,ms =  agg[counter.name]
                 agg[counter.name] = (count + 1, ms + counter.time_ms)
 
-        for counter, tup in agg.iteritems():
-            print "{0}({1}): {2}ms".format(counter, tup[0], tup[1])
+        for counter, tup in agg.items():
+            print("{0}({1}): {2}ms".format(counter, tup[0], tup[1]))
 
-        print "-" * 40
-        print "Total: {0}ms".format(summ)
+        print("-" * 40)
+        print("Total: {0}ms".format(summ))
 
     def start(self):
         "Enable profiling and start receiving performance counters"

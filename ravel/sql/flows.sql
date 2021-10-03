@@ -105,7 +105,7 @@ import time
 
 if "PYTHONPATH" in os.environ:
     sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
-sys.path.append("/home/ravel/ravel")
+sys.path.append("/home/ravel/ravel-python3")
 
 from ravel.flow import installFlow, Switch
 from ravel.profiling import PerfCounter
@@ -116,7 +116,7 @@ sw = Switch(sw_name, sw_ip, sw_dpid)
 installFlow(flow_id, sw, src_ip, src_mac, dst_ip, dst_mac, outport, revoutport)
 
 return 0
-$$ LANGUAGE plpythonu VOLATILE SECURITY DEFINER;
+$$ LANGUAGE plpython3u VOLATILE SECURITY DEFINER;
 
 
 /* Add flow trigger - for each per-switch rule, invoke add_flow_pre
@@ -231,7 +231,7 @@ import time
 
 if "PYTHONPATH" in os.environ:
     sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
-sys.path.append("/home/ravel/ravel")
+sys.path.append("/home/ravel/ravel-python3")
 
 from ravel.flow import removeFlow, Switch
 from ravel.profiling import PerfCounter
@@ -243,7 +243,7 @@ sw = Switch(sw_name, sw_ip, sw_dpid)
 removeFlow(flow_id, sw, src_ip, src_mac, dst_ip, dst_mac, outport, revoutport)
 
 return 0
-$$ LANGUAGE plpythonu VOLATILE SECURITY DEFINER;
+$$ LANGUAGE plpython3u VOLATILE SECURITY DEFINER;
 
 
 /* Delete flow trigger - for each per-switch rule, invoke del_flow_pre
