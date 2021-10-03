@@ -5,8 +5,8 @@ Policy information in computer networking today is hard to manage. This is in sh
 ## **Prerequisites**
 
 - Python 3 - dependencies
-  - Z3 - [Z3 API in Python](https://www.cs.tau.ac.il/~msagiv/courses/asv/z3py/guide-examples.htm)
-  - psycopg2 - [PostgreSQL database adapter for Python](https://www.psycopg.org/docs/)
+  - Z3-solver - [Z3 API in Python](https://www.cs.tau.ac.il/~msagiv/courses/asv/z3py/guide-examples.htm)
+  - psycopg2-binary - [PostgreSQL database adapter for Python](https://www.psycopg.org/docs/)
 
 - PostgreSQL
   - extension - plpython3u. Used to the user-defined functions which are to accommodate variables in c-table.
@@ -19,10 +19,10 @@ Run Ravel-based Sarasate system:
 
 ```bash
 # change to ravel directory
-$ cd ravel  
+$ cd Faure  
 
 # run ravel
-$ sudo ./ravel.py --onlydb
+$ sudo python3 ravel.py --onlydb
 
 # load Sarasate application
 ravel> orch load sarasate
