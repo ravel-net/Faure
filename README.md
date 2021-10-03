@@ -4,14 +4,16 @@ Faure is the newest version of Ravel which is a software-defined networking (SDN
 
 ## Prerequisites
 
+- Ubuntu 20.04(recommended) or greater
 - Python 3
 - pip3
-- Ubuntu 20.04(recommended) or greater
+
 
 ## Installation
 
 For installation instructions, see [`INSTALL`](INSTALL).
 
+We assume your system has matched prerequisites, the `INSTALL` can successfully run under these prerequisites. Thus, before installing Faure, please check whether the prerequisites are available.
 
 ## Faure Command-Line Arguments
 
