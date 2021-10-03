@@ -5,7 +5,7 @@ Faure is the newest version of Ravel which is a software-defined networking (SDN
 
 ## Installation
 
-For installation instructions, see [`INSTALL`](util/install.sh).
+For installation instructions, see [`INSTALL`](INSTALL).
 
 
 ## Faure Command-Line Arguments
