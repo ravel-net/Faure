@@ -1,20 +1,16 @@
-# Ravel
+# Faure
 
-Ravel is a software-defined networking (SDN) controller that uses a standard SQL database to represent the network.  _Why a database?_ SDN fundamentally revolves around data representation--representation of the network topology and forwarding, as well as the higher-level abstractions useful to applications.
-
-In Ravel, the entire network control infrastructure is implemented within a SQL database.  Abstractions of the network take the form of _SQL views_ expressed by SQL queries that can be instantiated and extended on the fly.  To allow multiple simultaneous abstractions to collectively drive control, Ravel automatically _orchestrates_ the abstractions to merge multiple views into a coherent forwarding behavior.
-
-For more information, see [http://ravel-net.org](http://ravel-net.org) or follow the [walkthrough](http://ravel-net.org/walkthrough).
+Faure is the newest version of Ravel which is a software-defined networking (SDN) controller that uses a standard SQL database to represent the network. For the more information of Ravel, see [https://github.com/ravel-net/ravel](https://github.com/ravel-net/ravel) or [http://ravel-net.org](http://ravel-net.org) or follow the [walkthrough](http://ravel-net.org/walkthrough). 
 
 
-### Installation
+## Installation
 
 For installation instructions, see `INSTALL`.
 
 
-### Ravel Command-Line Arguments
+## Faure Command-Line Arguments
 
-Ravel command-line arguments:
+Faure command-line arguments:
 
   * `--help`, `-h`: show the help message and exit
   * `--clean`, `-c`: cleanup Ravel and Mininet 
@@ -24,36 +20,44 @@ Ravel command-line arguments:
   * `--db`, `-d`: PostgreSQL database name
   * `--user`, -`u`: PostgreSQL username
   * `--password`, `-p`: force prompt for PostgreSQL password
-  * `--topo`, `-t`: specify a Mininet topology argument
-  * `--custom`, `-c`: specify custom classes or params for Mininet
-  * `--script`, `-s`: execute a Ravel script immediately after startup
   * `--verbosity`, `-v`: set logging output verbosity (debug|info|warning|critical|error)
 
-For example, to run Ravel with Mininet in the background, on a topology with a single switch and three hosts:
+For example, to run Faure under `--onlydb` with default database *ravel* and user *ravel*
 
-    sudo ./ravel.py --topo=single,3
+    sudo python3 ravel.py --onlydb
 
-To run only the database component of Ravel (i.e., no Mininet) on the same topology, using database `mydb` and username `myuser`:
+To run Faure under `--onlydb` with other databases and users:
 
-    sudo ./ravel.py --topo=single,3 --onlydb --db=mydb --user=myuser
+    sudo python3 ravel.py --onlydb --db=dbname --user=username --password=password
 
+## Faure CLI Commands
 
-### Ravel CLI Commands
-
-The Ravel CLI has a number of commands to monitor and control applications and the network:
+The Faure CLI has a number of commands to monitor and control applications and the network:
 
   * `help`: show list of commands
   * `apps`: list discovered applications
   * `stat`: show running configuration
-  * `m`: execute Mininet command
   * `p`: execute SQL statement
   * `time`: print execution time
   * `profile`: print detailed execution time
   * `reinit`: truncate all database tables except topology
   * `watch`: spawn new xterm watching database tables
-  * `exec`: execute a Ravel script
   * `orch load`: load a set of orchestrated applications (in ascending ordering of priority)
   * `orch unload`: unload one or more applications from the orchestrated set
   * `orch auto [on/off]`: auto-commit commands for orchestration
-  * `rt addflow [src] [dst]`: install a flow
-  * `rt delflow [src] [dst]`, `rt delflow [flow id]`: remove a flow
+
+## Python 3 Support
+
+- Faure 1.0 support Python 3!
+
+- We upgrade Python 2 to Python 3 in Faure. If still want to use the Python 2 version, see [Ravel](https://github.com/ravel-net/ravel).
+
+## New Features
+
+- `sarasate` application. Relational Algebra for Conditional Table.
+  
+  For the details, see [`README_sarasate.md`](https://github.com/ravel-net/Faure/blob/main/apps/README_sarasate.md)
+
+- `bgp` application. BGP simulation by using Sarasate application
+
+  For the details, see [`README_bgp.md`](https://github.com/ravel-net/Faure/blob/main/apps/README_sarasate.md)
