@@ -63,8 +63,8 @@ The Faure CLI has a number of commands to monitor and control applications and t
 
 - `sarasate` application. Relational Algebra for Conditional Table.
   
-  For the details, see [`README_sarasate.md`](https://github.com/ravel-net/Faure/blob/main/apps/README_sarasate.md)
+  For the details, see [`README_sarasate.md`](apps/README_sarasate.md)
 
 - `bgp` application. BGP simulation by using Sarasate application
 
-  For the details, see [`README_bgp.md`](https://github.com/ravel-net/Faure/blob/main/apps/README_sarasate.md)
+  For the details, see [`README_bgp.md`](apps/README_bgp.md)
