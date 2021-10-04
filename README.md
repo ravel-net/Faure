@@ -1,6 +1,16 @@
 # Faure
 
-Faure is the newest version of Ravel which is a software-defined networking (SDN) controller that uses a standard SQL database to represent the network. For the more information of Ravel, see [https://github.com/ravel-net/ravel](https://github.com/ravel-net/ravel) or [http://ravel-net.org](http://ravel-net.org) or follow the [walkthrough](http://ravel-net.org/walkthrough). 
+Faure is a network management platform built atop the Ravel controller. Ravel is a software-defined networking (SDN) controller that uses a standard SQL abstraction to represent and update the network (For more information on Ravel, see [https://github.com/ravel-net/ravel](https://github.com/ravel-net/ravel) or [http://ravel-net.org](http://ravel-net.org) or follow the [walkthrough](http://ravel-net.org/walkthrough). In addition to the familiar interface of traditional databases inherited from Ravel, Faure incorporates and implements the new theories of incomplete database, allowing direct modeling and new verification methods of networks that are only partially known (For more information, see the Faure paper at [HotNets'21](https://conferences.sigcomm.org/hotnets/2021/)).
+
+## New Features
+
+- `sarasate` application. Relational Algebra for Conditional Table.
+  
+  For the details, see [`README_sarasate.md`](apps/README_sarasate.md)
+
+- `bgp` application. BGP simulation by using Sarasate application
+
+  For the details, see [`README_bgp.md`](apps/README_bgp.md)
 
 ## Prerequisites
 
@@ -58,16 +68,6 @@ The Faure CLI has a number of commands to monitor and control applications and t
 - Faure 1.0 support Python 3!
 
 - We upgrade Python 2 to Python 3 in Faure. If still want to use the Python 2 version, see [Ravel](https://github.com/ravel-net/ravel).
-
-## New Features
-
-- `sarasate` application. Relational Algebra for Conditional Table.
-  
-  For the details, see [`README_sarasate.md`](apps/README_sarasate.md)
-
-- `bgp` application. BGP simulation by using Sarasate application
-
-  For the details, see [`README_bgp.md`](apps/README_bgp.md)
 
 ## Notes
 
