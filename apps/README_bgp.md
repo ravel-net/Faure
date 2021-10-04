@@ -20,7 +20,7 @@ We are mimicking the behavior of the BGP speaker as it receives announcement fro
 
 ## Walkthrough
 
-1. Run Faure system with `--onlydb` mode and enter in bgp terminal.
+1. Run Fauré system with `--onlydb` mode and enter in bgp terminal.
    
     ```bash
     # run Faure system

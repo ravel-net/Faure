@@ -1,6 +1,6 @@
-# Faure
+# Fauré
 
-Faure is a network management platform built atop the Ravel controller. Ravel is a software-defined networking (SDN) controller that uses a standard SQL abstraction to represent and update the network (For more information on Ravel, see [https://github.com/ravel-net/ravel](https://github.com/ravel-net/ravel) or [http://ravel-net.org](http://ravel-net.org) or follow the [walkthrough](http://ravel-net.org/walkthrough). In addition to the familiar interface of traditional databases inherited from Ravel, Faure incorporates and implements the new theories of incomplete database, allowing direct modeling and new verification methods of networks that are only partially known (For more information, see the Faure paper at [HotNets'21](https://conferences.sigcomm.org/hotnets/2021/)).
+Fauré is a network management platform built atop the Ravel controller. Ravel is a software-defined networking (SDN) controller that uses a standard SQL abstraction to represent and update the network (For more information on Ravel, see [https://github.com/ravel-net/ravel](https://github.com/ravel-net/ravel) or [http://ravel-net.org](http://ravel-net.org) or follow the [walkthrough](http://ravel-net.org/walkthrough). In addition to the familiar interface of traditional databases inherited from Ravel, Fauré incorporates and implements the new theories of incomplete database, allowing direct modeling and new verification methods of networks that are only partially known (For more information, see the [Fauré paper](https://doi.org/10.1145/3484266.3487391) at [HotNets'21](https://conferences.sigcomm.org/hotnets/2021/)).
 
 ## New Features
 
@@ -23,11 +23,11 @@ Faure is a network management platform built atop the Ravel controller. Ravel is
 
 For installation instructions, see [`INSTALL`](INSTALL).
 
-We assume your system has matched prerequisites, the `INSTALL` can successfully run under these prerequisites. Thus, before installing Faure, please check whether the prerequisites are available.
+We assume your system has matched prerequisites, the `INSTALL` can successfully run under these prerequisites. Thus, before installing Fauré, please check whether the prerequisites are available.
 
-## Faure Command-Line Arguments
+## Fauré Command-Line Arguments
 
-Faure command-line arguments:
+Fauré command-line arguments:
 
   * `--help`, `-h`: show the help message and exit
   * `--clean`, `-c`: cleanup Ravel and Mininet 
@@ -39,17 +39,17 @@ Faure command-line arguments:
   * `--password`, `-p`: force prompt for PostgreSQL password
   * `--verbosity`, `-v`: set logging output verbosity (debug|info|warning|critical|error)
 
-For example, to run Faure under `--onlydb` with default database *ravel* and user *ravel*
+For example, to run Fauré under `--onlydb` with default database *ravel* and user *ravel*
 
     sudo python3 ravel.py --onlydb
 
-To run Faure under `--onlydb` with other databases and users:
+To run Fauré under `--onlydb` with other databases and users:
 
     sudo python3 ravel.py --onlydb --db=dbname --user=username --password=password
 
-## Faure CLI Commands
+## Fauré CLI Commands
 
-The Faure CLI has a number of commands to monitor and control applications and the network:
+The Fauré CLI has a number of commands to monitor and control applications and the network:
 
   * `help`: show list of commands
   * `apps`: list discovered applications
@@ -65,10 +65,10 @@ The Faure CLI has a number of commands to monitor and control applications and t
 
 ## Python 3 Support
 
-- Faure 1.0 support Python 3!
+- Fauré 1.0 support Python 3!
 
-- We upgrade Python 2 to Python 3 in Faure. If still want to use the Python 2 version, see [Ravel](https://github.com/ravel-net/ravel).
+- We upgrade Python 2 to Python 3 in Fauré. If still want to use the Python 2 version, see [Ravel](https://github.com/ravel-net/ravel).
 
 ## Notes
 
-In Faure system, we are not openning all modes provided in Ravel system. In the future, we will open all modes related to Mininet in the Faure system.
+In Fauré system, we are not openning all modes provided in Ravel system. In the future, we will open all modes related to Mininet in the Fauré system.
